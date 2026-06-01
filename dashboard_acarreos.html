@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Acarreos</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #181c26;
+    --bg3: #1e2332;
+    --accent: #f0a500;
+    --accent2: #3b82f6;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --radius: 10px;
+    --mono: 'IBM Plex Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--display); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border2);
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 38px; height: 38px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  .header-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-family: var(--mono);
+    padding: 5px 12px; border-radius: 20px;
+    background: rgba(34,197,94,0.1); color: var(--success);
+    border: 1px solid rgba(34,197,94,0.25);
+  }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .last-update { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .refresh-btn {
+    padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text2); font-family: var(--mono);
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .refresh-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; padding: 1.25rem 2rem 0; }
+  .tab {
+    padding: 7px 18px; border-radius: 6px 6px 0 0;
+    border: 1px solid transparent; border-bottom: none;
+    font-size: 12px; font-family: var(--mono); cursor: pointer;
+    color: var(--text3); background: transparent; transition: all 0.15s;
+  }
+  .tab.active { background: var(--bg2); color: var(--accent); border-color: var(--border2); }
+  .tab:hover:not(.active) { color: var(--text2); }
+
+  /* MAIN */
+  .main { padding: 0 2rem 2rem; }
+  .panel { background: var(--bg2); border: 1px solid var(--border2); border-radius: 0 var(--radius) var(--radius) var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .metric {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.1rem;
+    position: relative; overflow: hidden;
+  }
+  .metric::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent); opacity: 0.6;
+  }
+  .metric.blue::before { background: var(--accent2); }
+  .metric.green::before { background: var(--success); }
+  .metric.red::before { background: var(--danger); }
+  .metric-label { font-size: 10px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .metric-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
+  .metric-unit { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 10px; font-family: var(--mono); color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    text-align: left; padding: 8px 12px;
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em;
+    border-bottom: 1px solid var(--border2); white-space: nowrap;
+  }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-family: var(--mono); font-weight: 500;
+  }
+  .badge-ok { background: rgba(34,197,94,0.15); color: var(--success); }
+  .badge-warn { background: rgba(240,165,0,0.15); color: var(--accent); }
+  .badge-err { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+  /* GRID 2 COL */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media(max-width: 680px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* LOC LIST */
+  .loc-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .loc-item:last-child { border-bottom: none; }
+  .loc-rank { font-size: 10px; font-family: var(--mono); color: var(--text3); min-width: 18px; }
+  .loc-name { flex: 1; font-size: 12px; color: var(--text2); }
+  .loc-bar-wrap { width: 80px; }
+  .loc-bar-bg { background: var(--bg); border-radius: 2px; height: 4px; }
+  .loc-bar { height: 4px; border-radius: 2px; background: var(--accent2); }
+  .loc-vol { font-size: 11px; font-family: var(--mono); color: var(--text); min-width: 62px; text-align: right; }
+
+  /* MAT LIST */
+  .mat-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .mat-item:last-child { border-bottom: none; }
+  .mat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .mat-name { flex: 1; font-size: 12px; color: var(--text2); }
+  .mat-vol { font-size: 11px; font-family: var(--mono); color: var(--text); }
+  .mat-pct { font-size: 10px; font-family: var(--mono); color: var(--text3); min-width: 36px; text-align: right; }
+
+  /* CHART */
+  .chart-wrap { position: relative; width: 100%; height: 220px; }
+
+  /* LOADING / ERROR */
+  .loading { text-align: center; padding: 3rem; color: var(--text3); font-family: var(--mono); font-size: 13px; }
+  .error-box {
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    color: var(--danger); font-family: var(--mono); font-size: 12px; margin-bottom: 1rem;
+  }
+
+  /* FOLIO TABLE TOP ROW */
+  .folio-val { font-family: var(--mono); color: var(--accent); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-icon">🚛</div>
+    <div>
+      <div class="header-title">Dashboard Acarreos</div>
+      <div class="header-sub">Conectado a Google Sheets · Auto-actualización</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><span class="live-dot"></span> EN VIVO</div>
+    <span class="last-update" id="lastUpdate">—</span>
+    <button class="refresh-btn" onclick="cargarDatos()">↻ Actualizar</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="setPeriodo('dia',this)">HOY</button>
+  <button class="tab" onclick="setPeriodo('semana',this)">SEMANA</button>
+  <button class="tab" onclick="setPeriodo('mes',this)">MES</button>
+  <button class="tab" onclick="setPeriodo('todo',this)">TODO</button>
+</div>
+
+<div class="main">
+  <div id="errorBox" style="display:none" class="error-box"></div>
+
+  <div class="panel">
+    <div class="metric-grid" id="metricGrid">
+      <div class="loading">Cargando datos...</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="section-title">Volumen por material</div>
+      <div id="matList"><div class="loading">—</div></div>
+    </div>
+    <div class="panel">
+      <div class="section-title">Top ubicaciones (TIRO)</div>
+      <div id="locList"><div class="loading">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Volumen por día</div>
+    <div class="chart-wrap">
+      <canvas id="volChart" role="img" aria-label="Gráfica de volumen acumulado por día">Volumen por día.</canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Registros del período</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Fecha</th>
+            <th>Material</th>
+            <th>Volumen (m³)</th>
+            <th>Placas</th>
+            <th>Tiro / Destino</th>
+            <th>Subtotal</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody">
+          <tr><td colspan="8" class="loading">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw4iw-8wePZkwfApRE8MuQ5bF2ZzMI2r00BgYOn5z_uoUyZ9_-spUJRYBoUeS71qqAmLWt2nKTkBAD/pub?gid=502687879&single=true&output=csv';
+
+let allRows = [];
+let periodo = 'dia';
+let chartInstance = null;
+const MAT_COLORS = ['#f0a500','#3b82f6','#22c55e','#ef4444','#a855f7','#06b6d4','#f97316','#ec4899'];
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  return lines.slice(1).map(line => {
+    const vals = [];
+    let cur = '', inQ = false;
+    for (let c of line) {
+      if (c === '"') inQ = !inQ;
+      else if (c === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    vals.push(cur.trim());
+    const row = {};
+    headers.forEach((h, i) => row[h] = (vals[i] || '').replace(/"/g,''));
+    return row;
+  }).filter(r => Object.values(r).some(v => v));
+}
+
+function parseFecha(str) {
+  if (!str) return null;
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    const [d, m, y] = parts;
+    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+  }
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+
+function filtrarPorPeriodo(rows) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+  const primerMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  return rows.filter(r => {
+    const f = parseFecha(r['fechaaca'] || r['fecha1'] || '');
+    if (!f) return periodo === 'todo';
+    f.setHours(0,0,0,0);
+    if (periodo === 'dia') return f.getTime() === hoy.getTime();
+    if (periodo === 'semana') return f >= lunes;
+    if (periodo === 'mes') return f >= primerMes;
+    return true;
+  });
+}
+
+function sumaVol(rows) {
+  return rows.reduce((s, r) => s + (parseFloat(r['volumen']) || 0), 0);
+}
+
+function render(rows) {
+  const total = sumaVol(rows);
+  const viajes = rows.length;
+  const subtotalTotal = rows.reduce((s,r) => s + (parseFloat((r['Subtotal']||'').replace(/[$,]/g,'')) || 0), 0);
+
+  // Materiales únicos
+  const matMap = {};
+  rows.forEach(r => {
+    const m = r['materialaca'] || 'Sin especificar';
+    if (!matMap[m]) matMap[m] = { vol: 0, count: 0 };
+    matMap[m].vol += parseFloat(r['volumen']) || 0;
+    matMap[m].count++;
+  });
+  const mats = Object.entries(matMap).sort((a,b) => b[1].vol - a[1].vol);
+
+  // Tiros / ubicaciones
+  const tirMap = {};
+  rows.forEach(r => {
+    const t = r['DESCTIRO'] || r['TIRO'] || 'Sin especificar';
+    if (!tirMap[t]) tirMap[t] = { vol: 0, count: 0 };
+    tirMap[t].vol += parseFloat(r['volumen']) || 0;
+    tirMap[t].count++;
+  });
+  const tiros = Object.entries(tirMap).sort((a,b) => b[1].vol - a[1].vol).slice(0,8);
+  const maxTiroVol = tiros[0]?.[1].vol || 1;
+
+  // METRICS
+  document.getElementById('metricGrid').innerHTML = `
+    <div class="metric">
+      <div class="metric-label">Viajes</div>
+      <div class="metric-value">${viajes.toLocaleString('es-MX')}</div>
+      <div class="metric-unit">registros</div>
+    </div>
+    <div class="metric blue">
+      <div class="metric-label">Volumen total</div>
+      <div class="metric-value">${total.toLocaleString('es-MX', {maximumFractionDigits:1})}</div>
+      <div class="metric-unit">m³ acarreados</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Materiales</div>
+      <div class="metric-value">${mats.length}</div>
+      <div class="metric-unit">tipos distintos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Destinos</div>
+      <div class="metric-value">${tiros.length}</div>
+      <div class="metric-unit">tiros activos</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Subtotal</div>
+      <div class="metric-value" style="font-size:18px">$${subtotalTotal.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+      <div class="metric-unit">MXN acumulado</div>
+    </div>
+  `;
+
+  // MAT LIST
+  document.getElementById('matList').innerHTML = mats.length ? mats.map(([ nombre, d ], i) => `
+    <div class="mat-item">
+      <div class="mat-dot" style="background:${MAT_COLORS[i % MAT_COLORS.length]}"></div>
+      <div class="mat-name">${nombre}</div>
+      <div class="mat-vol">${d.vol.toLocaleString('es-MX',{maximumFractionDigits:1})} m³</div>
+      <div class="mat-pct">${total ? Math.round(d.vol/total*100) : 0}%</div>
+    </div>
+  `).join('') : '<div class="loading">Sin datos</div>';
+
+  // LOC LIST
+  document.getElementById('locList').innerHTML = tiros.length ? tiros.map(([nombre, d], i) => `
+    <div class="loc-item">
+      <div class="loc-rank">${i+1}</div>
+      <div class="loc-name">${nombre}</div>
+      <div class="loc-bar-wrap"><div class="loc-bar-bg"><div class="loc-bar" style="width:${Math.round(d.vol/maxTiroVol*100)}%"></div></div></div>
+      <div class="loc-vol">${d.vol.toLocaleString('es-MX',{maximumFractionDigits:1})} m³</div>
+    </div>
+  `).join('') : '<div class="loading">Sin datos</div>';
+
+  // TABLA
+  const recientes = [...rows].reverse().slice(0, 50);
+  document.getElementById('tablaBody').innerHTML = recientes.length ? recientes.map(r => {
+    const st = (r['status']||'').toLowerCase();
+    const badgeCls = st.includes('complet') || st.includes('aprobad') ? 'badge-ok' : st.includes('cancel') || st.includes('rechaz') ? 'badge-err' : 'badge-warn';
+    return `<tr>
+      <td class="folio-val">${r['folio'] || '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${r['fechaaca'] || '—'}</td>
+      <td>${r['materialaca'] || '—'}</td>
+      <td style="font-family:var(--mono);font-weight:500">${parseFloat(r['volumen']||0).toLocaleString('es-MX',{maximumFractionDigits:2})}</td>
+      <td style="font-family:var(--mono);font-size:11px">${r['placas'] || '—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${r['DESCTIRO'] || r['TIRO'] || '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px">$${parseFloat((r['Subtotal']||'0').replace(/[$,]/g,'')).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+      <td><span class="badge ${badgeCls}">${r['status'] || 'Pendiente'}</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" class="loading">Sin registros en este período</td></tr>';
+
+  // CHART por día
+  const dayMap = {};
+  rows.forEach(r => {
+    const f = parseFecha(r['fechaaca'] || '');
+    if (!f) return;
+    const key = f.toLocaleDateString('es-MX', {day:'2-digit',month:'2-digit'});
+    if (!dayMap[key]) dayMap[key] = 0;
+    dayMap[key] += parseFloat(r['volumen']) || 0;
+  });
+  const sortedDays = Object.entries(dayMap).sort((a,b) => {
+    const [da,ma] = a[0].split('/'); const [db,mb] = b[0].split('/');
+    return new Date(`2024-${ma}-${da}`) - new Date(`2024-${mb}-${db}`);
+  });
+  const chartLabels = sortedDays.map(d => d[0]);
+  const chartData = sortedDays.map(d => Math.round(d[1]*10)/10);
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(document.getElementById('volChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: chartLabels.length ? chartLabels : ['Sin datos'],
+      datasets: [{
+        label: 'Volumen (m³)',
+        data: chartData.length ? chartData : [0],
+        backgroundColor: '#3b82f6',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10, family: "'IBM Plex Mono'" } }, grid: { display: false } },
+        y: { ticks: { color: '#64748b', font: { size: 10, family: "'IBM Plex Mono'" }, callback: v => v+'m³' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+async function cargarDatos() {
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('metricGrid').innerHTML = '<div class="loading">Cargando datos de Google Sheets...</div>';
+  try {
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error('No se pudo conectar con Google Sheets');
+    const text = await resp.text();
+    allRows = parseCSV(text);
+    document.getElementById('lastUpdate').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-MX');
+    const filtrados = filtrarPorPeriodo(allRows);
+    render(filtrados);
+  } catch (e) {
+    document.getElementById('errorBox').style.display = 'block';
+    document.getElementById('errorBox').textContent = '⚠ Error al cargar: ' + e.message + ' — Verifica que tu Sheet esté publicado como CSV.';
+    document.getElementById('metricGrid').innerHTML = '';
+  }
+}
+
+function setPeriodo(p, el) {
+  periodo = p;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const filtrados = filtrarPorPeriodo(allRows);
+  render(filtrados);
+}
+
+cargarDatos();
+setInterval(cargarDatos, 5 * 60 * 1000);
+</script>
+</body>
+</html>
