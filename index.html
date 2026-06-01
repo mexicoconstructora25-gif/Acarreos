@@ -202,6 +202,28 @@
   <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; color:#64748b;" id="fechaLabel"></span>
 </div>
 
+<!-- FILTRO MATERIAL + RANGO -->
+<div style="background:#181c26; border-bottom:1px solid rgba(255,255,255,0.08); padding:0.6rem 2rem; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+  <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#64748b; text-transform:uppercase; letter-spacing:0.08em;">Filtrar por:</span>
+
+  <div style="display:flex; align-items:center; gap:6px;">
+    <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#64748b;">Material</span>
+    <select id="filtroMaterial" onchange="aplicarFiltros()" style="background:#1e2332; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#f1f5f9; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 8px; cursor:pointer;">
+      <option value="">Todos</option>
+    </select>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:6px;">
+    <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#64748b;">Del</span>
+    <input type="date" id="rangoDesde" onchange="aplicarFiltros()" style="background:#1e2332; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#f1f5f9; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 8px;" />
+    <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#64748b;">al</span>
+    <input type="date" id="rangoHasta" onchange="aplicarFiltros()" style="background:#1e2332; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#f1f5f9; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 8px;" />
+  </div>
+
+  <button onclick="limpiarFiltros()" style="font-size:10px; font-family:'IBM Plex Mono',monospace; padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:#64748b; cursor:pointer;" id="btnLimpiar">✕ Limpiar</button>
+  <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#f0a500;" id="filtroActivoLabel"></span>
+</div>
+
 <div class="main">
   <div id="errorBox" style="display:none" class="error-box"></div>
 
@@ -493,6 +515,7 @@ async function cargarDatos() {
     const text = await resp.text();
     allRows = parseCSV(text);
     document.getElementById('lastUpdate').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-MX');
+    poblarMateriales();
     const filtrados = filtrarPorPeriodo(allRows);
     render(filtrados);
   } catch (e) {
@@ -500,6 +523,62 @@ async function cargarDatos() {
     document.getElementById('errorBox').textContent = '⚠ Error al cargar: ' + e.message + ' — Verifica que tu Sheet esté publicado como CSV.';
     document.getElementById('metricGrid').innerHTML = '';
   }
+}
+
+function poblarMateriales() {
+  const sel = document.getElementById('filtroMaterial');
+  const actual = sel.value;
+  const mats = [...new Set(allRows.map(r => r['materialaca']).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Todos</option>' + mats.map(m => `<option value="${m}" ${m===actual?'selected':''}>${m}</option>`).join('');
+}
+
+let filtroMat = '';
+let rangoDesde = null;
+let rangoHasta = null;
+
+function aplicarFiltros() {
+  filtroMat = document.getElementById('filtroMaterial').value;
+  const desdeVal = document.getElementById('rangoDesde').value;
+  const hastaVal = document.getElementById('rangoHasta').value;
+  rangoDesde = desdeVal ? (() => { const [y,m,d]=desdeVal.split('-'); return new Date(+y,+m-1,+d); })() : null;
+  rangoHasta = hastaVal ? (() => { const [y,m,d]=hastaVal.split('-'); return new Date(+y,+m-1,+d); })() : null;
+  if (rangoHasta) rangoHasta.setHours(23,59,59,999);
+
+  const labels = [];
+  if (filtroMat) labels.push(`Material: ${filtroMat}`);
+  if (rangoDesde || rangoHasta) {
+    const df = rangoDesde ? rangoDesde.toLocaleDateString('es-MX') : '…';
+    const dt = rangoHasta ? rangoHasta.toLocaleDateString('es-MX') : '…';
+    labels.push(`${df} → ${dt}`);
+  }
+  document.getElementById('filtroActivoLabel').textContent = labels.length ? '● ' + labels.join(' · ') : '';
+
+  let rows = filtrarPorPeriodo(allRows);
+  rows = aplicarFiltrosExtra(rows);
+  render(rows);
+}
+
+function aplicarFiltrosExtra(rows) {
+  return rows.filter(r => {
+    if (filtroMat && r['materialaca'] !== filtroMat) return false;
+    if (rangoDesde || rangoHasta) {
+      const f = parseFecha(r['fechaaca'] || r['fecha1'] || '');
+      if (!f) return false;
+      if (rangoDesde && f < rangoDesde) return false;
+      if (rangoHasta && f > rangoHasta) return false;
+    }
+    return true;
+  });
+}
+
+function limpiarFiltros() {
+  filtroMat = ''; rangoDesde = null; rangoHasta = null;
+  document.getElementById('filtroMaterial').value = '';
+  document.getElementById('rangoDesde').value = '';
+  document.getElementById('rangoHasta').value = '';
+  document.getElementById('filtroActivoLabel').textContent = '';
+  const filtrados = filtrarPorPeriodo(allRows);
+  render(filtrados);
 }
 
 function _unused(p, el) {
