@@ -274,26 +274,42 @@ function parseCSV(text) {
 
 function parseFecha(str) {
   if (!str) return null;
+  str = str.trim();
+  // Formato DD/MM/YYYY
   const parts = str.split('/');
   if (parts.length === 3) {
-    const [d, m, y] = parts;
-    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+    let d, m, y;
+    if (parts[2].length === 4) {
+      // DD/MM/YYYY
+      [d, m, y] = parts;
+    } else {
+      // MM/DD/YYYY fallback
+      [m, d, y] = parts;
+    }
+    const fecha = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+    return isNaN(fecha.getTime()) ? null : fecha;
   }
-  const d = new Date(str);
-  return isNaN(d) ? null : d;
+  // Formato YYYY-MM-DD
+  if (str.includes('-')) {
+    const fecha = new Date(str + 'T00:00:00');
+    return isNaN(fecha.getTime()) ? null : fecha;
+  }
+  return null;
 }
 
 function filtrarPorPeriodo(rows) {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+  const diaSemana = hoy.getDay() === 0 ? 7 : hoy.getDay();
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - diaSemana + 1);
   const primerMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   return rows.filter(r => {
-    const f = parseFecha(r['fechaaca'] || r['fecha1'] || '');
+    const rawFecha = r['fechaaca'] || r['fecha1'] || '';
+    const f = parseFecha(rawFecha);
     if (!f) return periodo === 'todo';
     f.setHours(0,0,0,0);
     if (periodo === 'dia') return f.getTime() === hoy.getTime();
-    if (periodo === 'semana') return f >= lunes;
-    if (periodo === 'mes') return f >= primerMes;
+    if (periodo === 'semana') return f >= lunes && f <= hoy;
+    if (periodo === 'mes') return f >= primerMes && f <= hoy;
     return true;
   });
 }
