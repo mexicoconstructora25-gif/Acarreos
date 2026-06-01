@@ -189,10 +189,17 @@
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="setPeriodo('dia',this)">HOY</button>
-  <button class="tab" onclick="setPeriodo('semana',this)">SEMANA</button>
-  <button class="tab" onclick="setPeriodo('mes',this)">MES</button>
-  <button class="tab" onclick="setPeriodo('todo',this)">TODO</button>
+  <button class="tab active" id="tab-dia" onclick="setPeriodo('dia',this)">HOY</button>
+  <button class="tab" id="tab-ayer" onclick="setPeriodo('ayer',this)">AYER</button>
+  <button class="tab" id="tab-semana" onclick="setPeriodo('semana',this)">SEMANA</button>
+  <button class="tab" id="tab-mes" onclick="setPeriodo('mes',this)">MES</button>
+  <button class="tab" id="tab-fecha" onclick="setPeriodo('fecha',this)">📅 FECHA</button>
+  <button class="tab" id="tab-todo" onclick="setPeriodo('todo',this)">TODO</button>
+</div>
+<div id="datePickerRow" style="display:none; align-items:center; gap:10px; padding: 0.5rem 2rem 0.75rem; flex-wrap:wrap;">
+  <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; color:#64748b;">Selecciona un día:</span>
+  <input type="date" id="fechaEspecifica" style="background:#1e2332; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#f1f5f9; font-family:'IBM Plex Mono',monospace; font-size:12px; padding:5px 10px;" onchange="aplicarFechaEspecifica()" />
+  <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; color:#64748b;" id="fechaLabel"></span>
 </div>
 
 <div class="main">
@@ -299,6 +306,7 @@ function parseFecha(str) {
 
 function filtrarPorPeriodo(rows) {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const ayer = new Date(hoy); ayer.setDate(hoy.getDate()-1);
   const diaSemana = hoy.getDay() === 0 ? 7 : hoy.getDay();
   const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - diaSemana + 1);
   const primerMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -308,10 +316,37 @@ function filtrarPorPeriodo(rows) {
     if (!f) return periodo === 'todo';
     f.setHours(0,0,0,0);
     if (periodo === 'dia') return f.getTime() === hoy.getTime();
+    if (periodo === 'ayer') return f.getTime() === ayer.getTime();
     if (periodo === 'semana') return f >= lunes && f <= hoy;
     if (periodo === 'mes') return f >= primerMes && f <= hoy;
+    if (periodo === 'fecha' && fechaEspecifica) return f.getTime() === fechaEspecifica.getTime();
     return true;
   });
+}
+
+let fechaEspecifica = null;
+
+function aplicarFechaEspecifica() {
+  const val = document.getElementById('fechaEspecifica').value;
+  if (!val) return;
+  const [y,m,d] = val.split('-');
+  fechaEspecifica = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+  fechaEspecifica.setHours(0,0,0,0);
+  document.getElementById('fechaLabel').textContent = `→ ${d}/${m}/${y}`;
+  const filtrados = filtrarPorPeriodo(allRows);
+  render(filtrados);
+}
+
+function setPeriodo(p, el) {
+  periodo = p;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const picker = document.getElementById('datePickerRow');
+  picker.style.display = p === 'fecha' ? 'flex' : 'none';
+  if (p !== 'fecha') {
+    const filtrados = filtrarPorPeriodo(allRows);
+    render(filtrados);
+  }
 }
 
 function sumaVol(rows) {
@@ -467,12 +502,8 @@ async function cargarDatos() {
   }
 }
 
-function setPeriodo(p, el) {
-  periodo = p;
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  const filtrados = filtrarPorPeriodo(allRows);
-  render(filtrados);
+function _unused(p, el) {
+  // reemplazada arriba
 }
 
 cargarDatos();
