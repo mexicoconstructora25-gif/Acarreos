@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>App de Estimaciones</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0efe9;color:#1a1a1a;font-size:14px}
+input,select,textarea,button{font-family:inherit;font-size:13px}
+button{cursor:pointer}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;min-width:220px;background:#fff;border-right:0.5px solid #e0deda;display:flex;flex-direction:column;padding:16px 0}
+.sidebar-logo{padding:0 16px 16px;border-bottom:0.5px solid #e0deda;margin-bottom:8px}
+.sidebar-logo h2{font-size:15px;font-weight:600}
+.sidebar-logo p{font-size:11px;color:#999;margin-top:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:#5a5a5a;font-size:13px;transition:background .15s;border-left:3px solid transparent}
+.nav-item:hover{background:#f0efe9}
+.nav-item.active{background:#eff6ff;color:#2563eb;font-weight:500;border-left-color:#2563eb}
+.nav-item i{font-size:18px}
+.main{flex:1;overflow:auto;display:flex;flex-direction:column}
+.sync-bar{background:#eff6ff;border-bottom:0.5px solid #bfdbfe;padding:6px 24px;font-size:12px;color:#2563eb;display:flex;align-items:center;gap:6px}
+.content{padding:24px;flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:0.5px solid #cccac4;background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;transition:all .15s}
+.btn:hover{background:#f0efe9}
+.btn-primary{background:#2563eb;color:#fff;border-color:#2563eb}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+.btn-sm{padding:4px 10px;font-size:12px}
+.card{background:#fff;border:0.5px solid #e0deda;border-radius:12px;padding:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.metric{background:#f8f7f4;border-radius:8px;padding:14px;text-align:center}
+.metric-label{font-size:11px;color:#999;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.metric-value{font-size:20px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px;border-bottom:0.5px solid #e0deda;text-align:left;background:#f8f7f4}
+td{padding:9px 12px;border-bottom:0.5px solid #e0deda;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8f7f4}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-green{background:#f0fdf4;color:#16a34a}
+.badge-blue{background:#eff6ff;color:#2563eb}
+.badge-amber{background:#fffbeb;color:#b45309}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:500;color:#5a5a5a;margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:7px 10px;border:0.5px solid #cccac4;border-radius:8px;background:#fff;color:#1a1a1a;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:#2563eb}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#fff;border-radius:12px;width:560px;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:18px 20px;border-bottom:0.5px solid #e0deda;display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:15px;font-weight:600}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:0.5px solid #e0deda;display:flex;justify-content:flex-end;gap:8px}
+.tabs{display:flex;border-bottom:0.5px solid #e0deda;margin-bottom:16px}
+.tab{padding:9px 16px;font-size:13px;cursor:pointer;color:#5a5a5a;border-bottom:2px solid transparent;margin-bottom:-0.5px}
+.tab.active{color:#2563eb;border-bottom-color:#2563eb;font-weight:500}
+.search-bar{display:flex;align-items:center;gap:8px;background:#f8f7f4;border:0.5px solid #e0deda;border-radius:8px;padding:7px 12px;margin-bottom:16px}
+.search-bar input{border:none;background:transparent;flex:1;outline:none;font-size:13px}
+.chip{display:inline-flex;padding:2px 8px;border-radius:20px;background:#f0efe9;border:0.5px solid #e0deda;font-size:11px;color:#5a5a5a}
+.empty-state{text-align:center;padding:48px 24px;color:#999}
+.empty-state i{font-size:36px;display:block;margin-bottom:12px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-header h1{font-size:16px;font-weight:600}
+.est-list-item{padding:12px 16px;border-bottom:0.5px solid #e0deda;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.est-list-item:hover{background:#f8f7f4}
+.est-list-item.sel{background:#eff6ff;border-left-color:#2563eb}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
+
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
+  return lines.slice(1).map(line=>{
+    const vals=[];let cur='';let inQ=false;
+    for(let c of line){if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){vals.push(cur.trim());cur='';}else cur+=c;}
+    vals.push(cur.trim());
+    const obj={};headers.forEach((h,i)=>obj[h]=(vals[i]||'').replace(/"/g,'').trim());
+    return obj;
+  }).filter(r=>Object.values(r).some(v=>v));
+}
+
+const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
+const fmtN=n=>new Intl.NumberFormat('es-MX').format(n||0);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+
+const DEMO=[
+  {id:'1',Nombre:'Cemento gris 50kg',Categoria:'Materiales',Unidad:'Saco',Precio:'195.00',Proveedor:'CEMEX',CC:'MAT-001'},
+  {id:'2',Nombre:'Varilla 3/8" x 12m',Categoria:'Acero',Unidad:'Pieza',Precio:'285.00',Proveedor:'DEACERO',CC:'ACR-002'},
+  {id:'3',Nombre:'Block 15x20x40',Categoria:'Mampostería',Unidad:'Pza',Precio:'12.50',Proveedor:'BLOCKS SA',CC:'MMP-003'},
+  {id:'4',Nombre:'Grava 3/4"',Categoria:'Pétreos',Unidad:'M3',Precio:'450.00',Proveedor:'PETREOS NW',CC:'PET-004'},
+  {id:'5',Nombre:'Arena limpia',Categoria:'Pétreos',Unidad:'M3',Precio:'380.00',Proveedor:'PETREOS NW',CC:'PET-005'},
+  {id:'6',Nombre:'Malla electrosoldada 6-6',Categoria:'Acero',Unidad:'Rollo',Precio:'1250.00',Proveedor:'DEACERO',CC:'ACR-006'},
+  {id:'7',Nombre:'Tubo PVC 4" x 6m',Categoria:'Instalaciones',Unidad:'Pieza',Precio:'195.00',Proveedor:'AMANCO',CC:'INS-007'},
+  {id:'8',Nombre:'Cable THW-LS 10AWG',Categoria:'Eléctrico',Unidad:'Metro',Precio:'28.50',Proveedor:'CONDUMEX',CC:'ELE-008'},
+];
+
+function App(){
+  const [view,setView]=useState('dashboard');
+  const [catalogo,setCatalogo]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [syncMsg,setSyncMsg]=useState('');
+  const [modal,setModal]=useState(null);
+  const [estimaciones,setEstimaciones]=useState([]);
+  const [histPrecios,setHistPrecios]=useState([]);
+
+  useEffect(()=>{
+    const saved=localStorage.getItem('estimaciones_v1');
+    if(saved){const d=JSON.parse(saved);setEstimaciones(d.est||[]);setHistPrecios(d.hp||[]);}
+    loadSheet();
+  },[]);
+
+  function save(est,hp){
+    localStorage.setItem('estimaciones_v1',JSON.stringify({est:est||estimaciones,hp:hp||histPrecios}));
+  }
+
+  async function loadSheet(){
+    setLoading(true);setSyncMsg('Conectando con Google Sheets...');
+    try{
+      const r=await fetch(SHEETS_CSV);
+      if(!r.ok)throw new Error();
+      const t=await r.text();
+      const d=parseCSV(t);
+      if(d.length>0){setCatalogo(d);setSyncMsg(`✓ ${d.length} productos cargados desde Google Sheets`);}
+      else{setCatalogo(DEMO);setSyncMsg('Sheet vacío — usando datos demo');}
+    }catch{setCatalogo(DEMO);setSyncMsg('Sin conexión al Sheet — usando datos demo');}
+    setLoading(false);
+    setTimeout(()=>setSyncMsg(''),4000);
+  }
+
+  const openModal=(t,d=null)=>setModal({t,d});
+  const closeModal=()=>setModal(null);
+
+  function saveEst(e){
+    const next=e.id?estimaciones.map(x=>x.id===e.id?e:x):[...estimaciones,{...e,id:uid(),fecha:new Date().toLocaleDateString('es-MX'),items:[],total:0}];
+    setEstimaciones(next);save(next,null);closeModal();
+  }
+  function delEst(id){const next=estimaciones.filter(e=>e.id!==id);setEstimaciones(next);save(next,null);}
+  function addItem(estId,item){
+    const next=estimaciones.map(e=>{
+      if(e.id!==estId)return e;
+      const items=[...(e.items||[]),{...item,id:uid()}];
+      return{...e,items,total:items.reduce((s,i)=>s+(+i.precio*+i.cantidad||0),0)};
+    });
+    setEstimaciones(next);save(next,null);closeModal();
+  }
+  function removeItem(estId,itemId){
+    const next=estimaciones.map(e=>{
+      if(e.id!==estId)return e;
+      const items=e.items.filter(i=>i.id!==itemId);
+      return{...e,items,total:items.reduce((s,i)=>s+(+i.precio*+i.cantidad||0),0)};
+    });
+    setEstimaciones(next);save(next,null);
+  }
+  function savePrecio(p){
+    let next=[...histPrecios];
+    if(p.vigente)next=next.map(x=>x.material===p.material&&x.proveedor===p.proveedor?{...x,vigente:false}:x);
+    next=[...next,{...p,id:uid(),fecha:new Date().toLocaleDateString('es-MX')}];
+    setHistPrecios(next);save(null,next);closeModal();
+  }
+  function toggleVigente(pid){
+    const p=histPrecios.find(x=>x.id===pid);if(!p)return;
+    const next=histPrecios.map(x=>x.material===p.material&&x.proveedor===p.proveedor?{...x,vigente:x.id===pid}:x);
+    setHistPrecios(next);save(null,next);
+  }
+
+  const totalEstimado=estimaciones.reduce((s,e)=>s+(e.total||0),0);
+
+  return(
+    <div className="app">
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <h2>🏗️ Estimaciones</h2>
+          <p>Gestión de obra</p>
+        </div>
+        {[
+          {id:'dashboard',icon:'ti-dashboard',label:'Dashboard'},
+          {id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'},
+          {id:'catalogo',icon:'ti-package',label:'Catálogo'},
+          {id:'precios',icon:'ti-tags',label:'Historial precios'},
+          {id:'reportes',icon:'ti-chart-bar',label:'Reportes'},
+        ].map(n=>(
+          <div key={n.id} className={`nav-item${view===n.id?' active':''}`} onClick={()=>setView(n.id)}>
+            <i className={`ti ${n.icon}`}/>{n.label}
+          </div>
+        ))}
+        <div style={{flex:1}}/>
+        <div className="nav-item" onClick={loadSheet}><i className="ti ti-refresh"/>Sincronizar Sheet</div>
+      </aside>
+      <div className="main">
+        {syncMsg&&<div className="sync-bar"><i className="ti ti-cloud"/>{syncMsg}</div>}
+        {loading
+          ?<div style={{display:'flex',alignItems:'center',justifyContent:'center',flex:1,color:'#999',gap:8}}><i className="ti ti-loader" style={{fontSize:20}}/>Cargando...</div>
+          :<>
+            {view==='dashboard'&&<Dashboard est={estimaciones} cat={catalogo} hp={histPrecios} fmt={fmt} fmtN={fmtN} total={totalEstimado} setView={setView} openModal={openModal}/>}
+            {view==='estimaciones'&&<Estimaciones est={estimaciones} cat={catalogo} hp={histPrecios} fmt={fmt} fmtN={fmtN} openModal={openModal} delEst={delEst} removeItem={removeItem}/>}
+            {view==='catalogo'&&<Catalogo cat={catalogo} fmt={fmt}/>}
+            {view==='precios'&&<HistPrecios hp={histPrecios} cat={catalogo} est={estimaciones} fmt={fmt} fmtN={fmtN} openModal={openModal} toggleVigente={toggleVigente}/>}
+            {view==='reportes'&&<Reportes est={estimaciones} fmt={fmt} fmtN={fmtN}/>}
+          </>
+        }
+      </div>
+      {modal&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&closeModal()}>
+          {modal.t==='nueva-est'&&<ModalNuevaEst onSave={saveEst} onClose={closeModal}/>}
+          {modal.t==='add-item'&&<ModalAddItem estId={modal.d} cat={catalogo} hp={histPrecios} onSave={addItem} onClose={closeModal}/>}
+          {modal.t==='nuevo-precio'&&<ModalNuevoPrecio cat={catalogo} onSave={savePrecio} onClose={closeModal}/>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Dashboard({est,cat,hp,fmt,fmtN,total,setView,openModal}){
+  const provMap={};
+  est.forEach(e=>(e.items||[]).forEach(i=>{
+    const p=i.proveedor||'N/A';
+    if(!provMap[p])provMap[p]={monto:0,qty:0};
+    provMap[p].monto+=(+i.precio*+i.cantidad||0);
+    provMap[p].qty+=(+i.cantidad||0);
+  }));
+  const topProv=Object.entries(provMap).sort((a,b)=>b[1].monto-a[1].monto).slice(0,5);
+  return(
+    <div className="content">
+      <div className="page-header">
+        <h1>Dashboard</h1>
+        <button className="btn btn-primary" onClick={()=>openModal('nueva-est')}><i className="ti ti-plus"/>Nueva estimación</button>
+      </div>
+      <div className="grid-4" style={{marginBottom:20}}>
+        {[
+          {l:'Estimaciones',v:est.length,i:'ti-clipboard-list',c:'#2563eb'},
+          {l:'Total estimado',v:fmt(total),i:'ti-currency-dollar',c:'#16a34a'},
+          {l:'Productos catálogo',v:cat.length,i:'ti-package',c:'#b45309'},
+          {l:'Precios registrados',v:hp.length,i:'ti-tags',c:'#7c3aed'},
+        ].map((m,i)=>(
+          <div key={i} className="metric">
+            <i className={`ti ${m.i}`} style={{fontSize:24,color:m.c,display:'block',marginBottom:8}}/>
+            <div className="metric-label">{m.l}</div>
+            <div className="metric-value">{m.v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid-2">
+        <div className="card">
+          <p style={{fontWeight:600,fontSize:13,marginBottom:14,color:'#5a5a5a'}}>Últimas estimaciones</p>
+          {est.length===0
+            ?<div className="empty-state"><i className="ti ti-clipboard-x"/><p>Sin estimaciones aún</p></div>
+            :<table><thead><tr><th>Nombre</th><th>Fecha</th><th>Ítems</th><th>Total</th></tr></thead>
+              <tbody>{est.slice(-5).reverse().map(e=>(
+                <tr key={e.id}><td style={{fontWeight:500}}>{e.nombre}</td><td style={{color:'#999',fontSize:12}}>{e.fecha}</td><td><span className="badge badge-blue">{e.items?.length||0}</span></td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(e.total)}</td></tr>
+              ))}</tbody></table>
+          }
+        </div>
+        <div className="card">
+          <p style={{fontWeight:600,fontSize:13,marginBottom:14,color:'#5a5a5a'}}>Top proveedores por monto</p>
+          {topProv.length===0
+            ?<div className="empty-state"><i className="ti ti-truck-off"/><p>Sin datos aún</p></div>
+            :<table><thead><tr><th>Proveedor</th><th>Cant.</th><th>Monto</th></tr></thead>
+              <tbody>{topProv.map(([p,v])=>(
+                <tr key={p}><td style={{fontWeight:500}}>{p}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>
+              ))}</tbody></table>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem}){
+  const [sel,setSel]=useState(null);
+  const [tab,setTab]=useState('items');
+  const s=est.find(e=>e.id===sel);
+
+  const byProv={};const byMat={};
+  (s?.items||[]).forEach(i=>{
+    const p=i.proveedor||'N/A';const m=i.material||'N/A';
+    if(!byProv[p])byProv[p]={qty:0,monto:0};
+    byProv[p].qty+=(+i.cantidad||0);byProv[p].monto+=(+i.precio*+i.cantidad||0);
+    if(!byMat[m])byMat[m]={qty:0,monto:0,unidad:i.unidad};
+    byMat[m].qty+=(+i.cantidad||0);byMat[m].monto+=(+i.precio*+i.cantidad||0);
+  });
+
+  return(
+    <div className="content">
+      <div className="page-header">
+        <h1>Estimaciones</h1>
+        <button className="btn btn-primary" onClick={()=>openModal('nueva-est')}><i className="ti ti-plus"/>Nueva estimación</button>
+      </div>
+      <div className="grid-2" style={{height:'calc(100vh - 130px)'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <div style={{padding:'12px 16px',borderBottom:'0.5px solid #e0deda',fontWeight:600,fontSize:13,color:'#5a5a5a'}}>
+            Listado ({est.length})
+          </div>
+          {est.length===0
+            ?<div className="empty-state"><i className="ti ti-clipboard-x"/><p>Sin estimaciones</p></div>
+            :est.map(e=>(
+              <div key={e.id} className={`est-list-item${sel===e.id?' sel':''}`} onClick={()=>{setSel(e.id);setTab('items');}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                  <div>
+                    <p style={{fontWeight:500}}>{e.nombre}</p>
+                    <p style={{fontSize:11,color:'#999',marginTop:2}}>{e.obra||'Sin obra'} · {e.fecha}</p>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <p style={{fontWeight:700,color:'#16a34a'}}>{fmt(e.total)}</p>
+                    <p style={{fontSize:11,color:'#999'}}>{e.items?.length||0} ítems</p>
+                  </div>
+                </div>
+                {sel===e.id&&(
+                  <div style={{display:'flex',gap:6,marginTop:10}} onClick={ev=>ev.stopPropagation()}>
+                    <button className="btn btn-sm btn-primary" onClick={()=>openModal('add-item',e.id)}><i className="ti ti-plus"/>Agregar ítem</button>
+                    <button className="btn btn-sm btn-danger" onClick={()=>{if(confirm('¿Eliminar estimación?')){delEst(e.id);setSel(null);}}}><i className="ti ti-trash"/></button>
+                  </div>
+                )}
+              </div>
+            ))
+          }
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          {!s
+            ?<div className="empty-state"><i className="ti ti-hand-click"/><p>Selecciona una estimación</p></div>
+            :<>
+              <div style={{padding:'14px 16px',borderBottom:'0.5px solid #e0deda'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                  <div><p style={{fontWeight:600,fontSize:14}}>{s.nombre}</p><p style={{fontSize:11,color:'#999'}}>{s.obra} · {s.fecha}</p></div>
+                  <div style={{textAlign:'right'}}><p style={{fontWeight:700,color:'#16a34a',fontSize:16}}>{fmt(s.total)}</p><p style={{fontSize:11,color:'#999'}}>Total</p></div>
+                </div>
+                <div className="tabs" style={{marginBottom:0}}>
+                  {[['items','Ítems'],['prov','Por proveedor'],['mat','Por material']].map(([k,l])=>(
+                    <div key={k} className={`tab${tab===k?' active':''}`} onClick={()=>setTab(k)}>{l}</div>
+                  ))}
+                </div>
+              </div>
+              <div style={{padding:16}}>
+                {tab==='items'&&(
+                  (s.items||[]).length===0
+                    ?<div className="empty-state"><i className="ti ti-package-off"/><p>Sin ítems — agrega uno</p></div>
+                    :<table>
+                      <thead><tr><th>Material</th><th>Proveedor</th><th>Und.</th><th>Precio</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead>
+                      <tbody>{s.items.map(it=>(
+                        <tr key={it.id}>
+                          <td style={{fontWeight:500}}>{it.material}</td>
+                          <td style={{color:'#5a5a5a'}}>{it.proveedor}</td>
+                          <td>{it.unidad}</td>
+                          <td>{fmt(+it.precio)}</td>
+                          <td>{fmtN(+it.cantidad)}</td>
+                          <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+it.precio*+it.cantidad)}</td>
+                          <td><button className="btn btn-sm btn-danger" onClick={()=>removeItem(s.id,it.id)}><i className="ti ti-trash"/></button></td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                )}
+                {tab==='prov'&&(
+                  Object.keys(byProv).length===0
+                    ?<div className="empty-state"><i className="ti ti-truck-off"/><p>Sin datos</p></div>
+                    :<table>
+                      <thead><tr><th>Proveedor</th><th>Cant. acumulada</th><th>Monto acumulado</th></tr></thead>
+                      <tbody>{Object.entries(byProv).map(([p,v])=>(
+                        <tr key={p}><td style={{fontWeight:500}}>{p}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>
+                      ))}</tbody>
+                    </table>
+                )}
+                {tab==='mat'&&(
+                  Object.keys(byMat).length===0
+                    ?<div className="empty-state"><i className="ti ti-package-off"/><p>Sin datos</p></div>
+                    :<table>
+                      <thead><tr><th>Material</th><th>Unidad</th><th>Cant. acumulada</th><th>Monto acumulado</th></tr></thead>
+                      <tbody>{Object.entries(byMat).map(([m,v])=>(
+                        <tr key={m}><td style={{fontWeight:500}}>{m}</td><td>{v.unidad}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>
+                      ))}</tbody>
+                    </table>
+                )}
+              </div>
+            </>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Catalogo({cat,fmt}){
+  const [q,setQ]=useState('');
+  const f=cat.filter(c=>!q||[c.Nombre,c.Proveedor,c.Categoria].some(x=>x?.toLowerCase().includes(q.toLowerCase())));
+  return(
+    <div className="content">
+      <div className="page-header">
+        <h1>Catálogo de productos</h1>
+        <span className="badge badge-blue">{cat.length} productos desde Google Sheets</span>
+      </div>
+      <div className="search-bar"><i className="ti ti-search" style={{color:'#999'}}/><input placeholder="Buscar nombre, proveedor, categoría..." value={q} onChange={e=>setQ(e.target.value)}/></div>
+      <div className="card" style={{padding:0}}>
+        <table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Precio</th><th>Proveedor</th><th>C.C</th></tr></thead>
+          <tbody>
+            {f.length===0
+              ?<tr><td colSpan={7} style={{textAlign:'center',padding:32,color:'#999'}}>Sin resultados</td></tr>
+              :f.map((c,i)=>(
+                <tr key={i}>
+                  <td style={{color:'#999',fontSize:11}}>{c.id||i+1}</td>
+                  <td style={{fontWeight:500}}>{c.Nombre}</td>
+                  <td><span className="chip">{c.Categoria}</span></td>
+                  <td>{c.Unidad}</td>
+                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+c.Precio||0)}</td>
+                  <td>{c.Proveedor}</td>
+                  <td style={{fontSize:12,color:'#999'}}>{c.CC}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function HistPrecios({hp,cat,est,fmt,fmtN,openModal,toggleVigente}){
+  const [q,setQ]=useState('');
+  const f=hp.filter(p=>!q||[p.material,p.proveedor].some(x=>x?.toLowerCase().includes(q.toLowerCase())));
+
+  const acum={};
+  est.forEach(e=>(e.items||[]).forEach(i=>{
+    const k=`${i.material}||${i.proveedor}||${i.precio}`;
+    if(!acum[k])acum[k]={qty:0,monto:0};
+    acum[k].qty+=(+i.cantidad||0);acum[k].monto+=(+i.precio*+i.cantidad||0);
+  }));
+
+  return(
+    <div className="content">
+      <div className="page-header">
+        <h1>Historial de precios</h1>
+        <button className="btn btn-primary" onClick={()=>openModal('nuevo-precio')}><i className="ti ti-plus"/>Registrar precio</button>
+      </div>
+      <div className="search-bar"><i className="ti ti-search" style={{color:'#999'}}/><input placeholder="Buscar material o proveedor..." value={q} onChange={e=>setQ(e.target.value)}/></div>
+      <div className="card" style={{padding:0}}>
+        <table>
+          <thead><tr><th>Material</th><th>Proveedor</th><th>Precio</th><th>Fecha</th><th>Vigente</th><th>Cant. acum.</th><th>Monto acum.</th><th>Notas</th></tr></thead>
+          <tbody>
+            {f.length===0
+              ?<tr><td colSpan={8} style={{textAlign:'center',padding:32,color:'#999'}}>{hp.length===0?'Sin precios — haz clic en "Registrar precio"':'Sin resultados'}</td></tr>
+              :f.map(p=>{
+                const k=`${p.material}||${p.proveedor}||${p.precio}`;
+                const a=acum[k]||{qty:0,monto:0};
+                return(
+                  <tr key={p.id}>
+                    <td style={{fontWeight:500}}>{p.material}</td>
+                    <td>{p.proveedor}</td>
+                    <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+p.precio)}</td>
+                    <td style={{fontSize:12,color:'#999'}}>{p.fecha}</td>
+                    <td>
+                      <div style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onClick={()=>toggleVigente(p.id)}>
+                        <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${p.vigente?'#16a34a':'#ccc'}`,background:p.vigente?'#16a34a':'transparent',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          {p.vigente&&<i className="ti ti-check" style={{color:'#fff',fontSize:11}}/>}
+                        </div>
+                        {p.vigente&&<span className="badge badge-green">Vigente</span>}
+                      </div>
+                    </td>
+                    <td>{a.qty>0?fmtN(a.qty):'—'}</td>
+                    <td style={{fontWeight:600,color:a.monto>0?'#2563eb':'#999'}}>{a.monto>0?fmt(a.monto):'—'}</td>
+                    <td style={{fontSize:12,color:'#999'}}>{p.notas||'—'}</td>
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function Reportes({est,fmt,fmtN}){
+  const byProv={};const byCat={};
+  est.forEach(e=>(e.items||[]).forEach(i=>{
+    const p=i.proveedor||'N/A';const c=i.categoria||'N/A';
+    if(!byProv[p])byProv[p]={qty:0,monto:0,ests:new Set()};
+    byProv[p].qty+=(+i.cantidad||0);byProv[p].monto+=(+i.precio*+i.cantidad||0);byProv[p].ests.add(e.id);
+    if(!byCat[c])byCat[c]={qty:0,monto:0};
+    byCat[c].qty+=(+i.cantidad||0);byCat[c].monto+=(+i.precio*+i.cantidad||0);
+  }));
+  const totMonto=Object.values(byProv).reduce((s,v)=>s+v.monto,0);
+
+  return(
+    <div className="content">
+      <div className="page-header"><h1>Reportes acumulados</h1></div>
+      <div className="grid-2" style={{marginBottom:16}}>
+        <div className="card">
+          <p style={{fontWeight:600,fontSize:13,marginBottom:14,color:'#5a5a5a'}}>Por proveedor</p>
+          {Object.keys(byProv).length===0
+            ?<div className="empty-state" style={{padding:24}}><i className="ti ti-chart-off"/><p>Sin datos</p></div>
+            :<table>
+              <thead><tr><th>Proveedor</th><th>Estimaciones</th><th>Cant.</th><th>Monto</th><th>%</th></tr></thead>
+              <tbody>{Object.entries(byProv).sort((a,b)=>b[1].monto-a[1].monto).map(([p,v])=>(
+                <tr key={p}>
+                  <td style={{fontWeight:500}}>{p}</td>
+                  <td><span className="badge badge-blue">{v.ests.size}</span></td>
+                  <td>{fmtN(v.qty)}</td>
+                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td>
+                  <td style={{fontSize:12,color:'#999'}}>{totMonto>0?((v.monto/totMonto)*100).toFixed(1)+'%':'—'}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          }
+        </div>
+        <div className="card">
+          <p style={{fontWeight:600,fontSize:13,marginBottom:14,color:'#5a5a5a'}}>Por categoría</p>
+          {Object.keys(byCat).length===0
+            ?<div className="empty-state" style={{padding:24}}><i className="ti ti-chart-off"/><p>Sin datos</p></div>
+            :<table>
+              <thead><tr><th>Categoría</th><th>Cant.</th><th>Monto</th><th>%</th></tr></thead>
+              <tbody>{Object.entries(byCat).sort((a,b)=>b[1].monto-a[1].monto).map(([c,v])=>(
+                <tr key={c}>
+                  <td><span className="chip">{c}</span></td>
+                  <td>{fmtN(v.qty)}</td>
+                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td>
+                  <td style={{fontSize:12,color:'#999'}}>{totMonto>0?((v.monto/totMonto)*100).toFixed(1)+'%':'—'}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          }
+        </div>
+      </div>
+      <div className="card">
+        <p style={{fontWeight:600,fontSize:13,marginBottom:14,color:'#5a5a5a'}}>Resumen de estimaciones</p>
+        {est.length===0
+          ?<div className="empty-state" style={{padding:24}}><i className="ti ti-clipboard-x"/><p>Sin estimaciones</p></div>
+          :<table>
+            <thead><tr><th>Estimación</th><th>Obra</th><th>Fecha</th><th>Ítems</th><th>Proveedores</th><th>Total</th></tr></thead>
+            <tbody>{est.map(e=>{
+              const provs=[...new Set((e.items||[]).map(i=>i.proveedor).filter(Boolean))];
+              return(
+                <tr key={e.id}>
+                  <td style={{fontWeight:500}}>{e.nombre}</td>
+                  <td>{e.obra||'—'}</td>
+                  <td style={{color:'#999',fontSize:12}}>{e.fecha}</td>
+                  <td><span className="badge badge-blue">{e.items?.length||0}</span></td>
+                  <td style={{fontSize:12}}>{provs.join(', ')||'—'}</td>
+                  <td style={{fontWeight:700,color:'#16a34a'}}>{fmt(e.total)}</td>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+        }
+      </div>
+    </div>
+  );
+}
+
+function ModalNuevaEst({onSave,onClose}){
+  const [f,setF]=useState({nombre:'',obra:'',descripcion:''});
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
+  return(
+    <div className="modal">
+      <div className="modal-header"><h3>Nueva estimación</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+      <div className="modal-body">
+        <div className="form-group"><label>Nombre *</label><input placeholder="Ej: Estimación cimentación fase 1" value={f.nombre} onChange={e=>s('nombre',e.target.value)}/></div>
+        <div className="form-group"><label>Obra / Proyecto</label><input placeholder="Ej: Residencial Las Palmas" value={f.obra} onChange={e=>s('obra',e.target.value)}/></div>
+        <div className="form-group"><label>Descripción</label><textarea rows={3} value={f.descripcion} onChange={e=>s('descripcion',e.target.value)} style={{resize:'vertical'}}/></div>
+      </div>
+      <div className="modal-footer">
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={!f.nombre} onClick={()=>onSave(f)}>Crear</button>
+      </div>
+    </div>
+  );
+}
+
+function ModalAddItem({estId,cat,hp,onSave,onClose}){
+  const [selId,setSelId]=useState('');
+  const [cant,setCant]=useState('');
+  const [precioOv,setPrecioOv]=useState('');
+  const item=cat.find(c=>c.id===selId);
+  const vigente=item?hp.find(p=>p.material===item.Nombre&&p.proveedor===item.Proveedor&&p.vigente):null;
+  const precioBase=precioOv||(vigente?.precio)||(item?.Precio)||'';
+
+  return(
+    <div className="modal">
+      <div className="modal-header"><h3>Agregar ítem</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+      <div className="modal-body">
+        <div className="form-group">
+          <label>Producto *</label>
+          <select value={selId} onChange={e=>setSelId(e.target.value)}>
+            <option value="">— Selecciona un producto —</option>
+            {cat.map((c,i)=><option key={i} value={c.id}>{c.Nombre} · {c.Proveedor}</option>)}
+          </select>
+        </div>
+        {item&&(
+          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12,display:'flex',gap:16,flexWrap:'wrap'}}>
+            <span><span style={{color:'#999'}}>Cat.:</span> {item.Categoria}</span>
+            <span><span style={{color:'#999'}}>Und.:</span> {item.Unidad}</span>
+            <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
+            <span><span style={{color:'#999'}}>Precio catálogo:</span> <strong style={{color:'#16a34a'}}>${(+item.Precio||0).toFixed(2)}</strong></span>
+            {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: ${(+vigente.precio).toFixed(2)}</span>}
+          </div>
+        )}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+          <div className="form-group"><label>Cantidad *</label><input type="number" min="0" step="any" value={cant} onChange={e=>setCant(e.target.value)} placeholder="0"/></div>
+          <div className="form-group"><label>Precio unitario</label><input type="number" step="any" value={precioOv} onChange={e=>setPrecioOv(e.target.value)} placeholder={precioBase||'0.00'}/></div>
+        </div>
+        {item&&cant&&(
+          <div style={{background:'#f0fdf4',borderRadius:8,padding:'10px 14px',border:'0.5px solid #bbf7d0'}}>
+            <strong style={{color:'#16a34a'}}>Subtotal: {new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format((+precioBase||0)*(+cant||0))}</strong>
+          </div>
+        )}
+      </div>
+      <div className="modal-footer">
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={!item||!cant} onClick={()=>onSave(estId,{material:item.Nombre,proveedor:item.Proveedor,unidad:item.Unidad,precio:precioBase,cantidad:cant,categoria:item.Categoria,cc:item.CC})}>Agregar</button>
+      </div>
+    </div>
+  );
+}
+
+function ModalNuevoPrecio({cat,onSave,onClose}){
+  const [f,setF]=useState({material:'',proveedor:'',precio:'',notas:'',vigente:true});
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
+  const mats=[...new Set(cat.map(c=>c.Nombre).filter(Boolean))];
+  const provs=[...new Set(cat.map(c=>c.Proveedor).filter(Boolean))];
+  return(
+    <div className="modal">
+      <div className="modal-header"><h3>Registrar precio</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+      <div className="modal-body">
+        <div className="form-group"><label>Material *</label><select value={f.material} onChange={e=>s('material',e.target.value)}><option value="">— Selecciona —</option>{mats.map((m,i)=><option key={i} value={m}>{m}</option>)}</select></div>
+        <div className="form-group"><label>Proveedor *</label><select value={f.proveedor} onChange={e=>s('proveedor',e.target.value)}><option value="">— Selecciona —</option>{provs.map((p,i)=><option key={i} value={p}>{p}</option>)}</select></div>
+        <div className="form-group"><label>Precio unitario *</label><input type="number" step="any" value={f.precio} onChange={e=>s('precio',e.target.value)} placeholder="0.00"/></div>
+        <div className="form-group"><label>Notas</label><input value={f.notas} onChange={e=>s('notas',e.target.value)} placeholder="Ej: Cotización válida 30 días"/></div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginTop:4,cursor:'pointer'}} onClick={()=>s('vigente',!f.vigente)}>
+          <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${f.vigente?'#16a34a':'#ccc'}`,background:f.vigente?'#16a34a':'transparent',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            {f.vigente&&<i className="ti ti-check" style={{color:'#fff',fontSize:11}}/>}
+          </div>
+          <span style={{fontSize:13}}>Marcar como precio vigente</span>
+        </div>
+      </div>
+      <div className="modal-footer">
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={!f.material||!f.proveedor||!f.precio} onClick={()=>onSave(f)}>Guardar</button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
