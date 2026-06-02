@@ -6,72 +6,65 @@
     <title>Catálogo MexicoConstructora25</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4 font-sans">
+<body class="bg-gray-100 p-4">
     <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-3xl font-bold mb-6 text-center text-blue-900">Catálogo MexicoConstructora25</h1>
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">Catálogo MexicoConstructora25</h1>
         
-        <!-- Formulario -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
-            <input type="text" id="id" placeholder="ID" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="text" id="nombre" placeholder="Nombre" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="text" id="categoria" placeholder="Categoría" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="text" id="unidad" placeholder="Unidad" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="number" id="precio" placeholder="Precio" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="text" id="proveedor" placeholder="Proveedor" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="text" id="cc" placeholder="C.C" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-            <button id="btnGuardar" class="bg-blue-600 text-white font-bold rounded hover:bg-blue-700 transition shadow-md">Guardar Producto</button>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-gray-50 p-4 rounded border">
+            <input type="text" id="id" placeholder="ID" class="border p-2 rounded">
+            <input type="text" id="nombre" placeholder="Nombre" class="border p-2 rounded">
+            <input type="text" id="categoria" placeholder="Categoría" class="border p-2 rounded">
+            <input type="text" id="unidad" placeholder="Unidad" class="border p-2 rounded">
+            <input type="number" id="precio" placeholder="Precio" class="border p-2 rounded">
+            <input type="text" id="proveedor" placeholder="Proveedor" class="border p-2 rounded">
+            <input type="text" id="cc" placeholder="C.C" class="border p-2 rounded">
+            <button id="btnGuardar" class="bg-blue-600 text-white rounded hover:bg-blue-700 transition px-4 py-2">Guardar Producto</button>
         </div>
 
-        <!-- Tabla -->
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+            <table class="w-full text-left border-collapse bg-white shadow-sm">
                 <thead>
-                    <tr class="bg-blue-800 text-white uppercase text-sm">
-                        <th class="p-3 border-b">ID</th>
-                        <th class="p-3 border-b">Nombre</th>
-                        <th class="p-3 border-b">Categoría</th>
-                        <th class="p-3 border-b">Precio</th>
+                    <tr class="bg-blue-800 text-white">
+                        <th class="p-2 border">ID</th>
+                        <th class="p-2 border">Nombre</th>
+                        <th class="p-2 border">Categoría</th>
+                        <th class="p-2 border">Precio</th>
                     </tr>
                 </thead>
-                <tbody id="listaCatalogo" class="text-gray-700">
-                    <tr><td colspan="4" class="p-4 text-center italic">Cargando datos de la nube...</td></tr>
+                <tbody id="listaCatalogo">
+                    <tr><td colspan="4" class="p-4 text-center">Cargando datos...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // URL de tu API en Google Apps Script
+        // PEGA AQUÍ TU NUEVA URL DESPUÉS DE IMPLEMENTAR
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypyD9RQmscNxYZAQ7WDMKx0mhQ4wMU-HfTOT5vy4vLlIKW3Ky1xr9hrP8KzDdvtUce/exec";
 
         async function cargarDatos() {
-            const tbody = document.getElementById('listaCatalogo');
             try {
                 const response = await fetch(WEB_APP_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
                 const datos = await response.json();
-                
+                const tbody = document.getElementById('listaCatalogo');
                 tbody.innerHTML = '';
-                if(datos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">No hay productos registrados.</td></tr>';
-                    return;
-                }
-
                 datos.forEach(d => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 border-b">
-                            <td class="p-3 border-r">${d.id || '-'}</td>
-                            <td class="p-3 border-r">${d.nombre || '-'}</td>
-                            <td class="p-3 border-r">${d.categoria || '-'}</td>
-                            <td class="p-3">$${parseFloat(d.precio || 0).toLocaleString()}</td>
-                        </tr>`;
+                    tbody.innerHTML += `<tr>
+                        <td class="p-2 border">${d.id || ''}</td>
+                        <td class="p-2 border">${d.nombre || ''}</td>
+                        <td class="p-2 border">${d.categoria || ''}</td>
+                        <td class="p-2 border">$${d.precio || 0}</td>
+                    </tr>`;
                 });
             } catch (e) {
-                console.error("Error:", e);
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-red-500 text-center">Error al conectar con la base de datos.</td></tr>';
+                console.error(e);
+                document.getElementById('listaCatalogo').innerHTML = '<tr><td colspan="4" class="p-4 text-red-500 text-center">Error al conectar.</td></tr>';
             }
         }
 
         document.getElementById('btnGuardar').addEventListener('click', async () => {
+            const btn = document.getElementById('btnGuardar');
             const data = {
                 id: document.getElementById('id').value,
                 nombre: document.getElementById('nombre').value,
@@ -82,37 +75,27 @@
                 cc: document.getElementById('cc').value
             };
             
-            // Validación básica
-            if(!data.nombre || !data.id) {
-                alert("Por favor, llena al menos ID y Nombre");
-                return;
-            }
-
-            const btn = document.getElementById('btnGuardar');
-            btn.innerText = "Guardando...";
-            btn.disabled = true;
-
             try {
+                btn.innerText = "Guardando...";
+                btn.disabled = true;
+
+                // Usamos POST con cuerpo simple para evitar problemas de CORS
                 await fetch(WEB_APP_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(data) 
                 });
                 
                 alert("Guardado correctamente");
-                
-                // Limpiar campos
-                document.querySelectorAll('input').forEach(i => i.value = '');
-                
+                btn.innerText = "Guardar Producto";
+                btn.disabled = false;
                 cargarDatos();
             } catch (e) {
                 alert("Error al guardar en el servidor: " + e.message);
-            } finally {
                 btn.innerText = "Guardar Producto";
                 btn.disabled = false;
             }
         });
 
-        // Carga inicial
         cargarDatos();
     </script>
 </body>
