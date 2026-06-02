@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - MexicoConstructora25</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">Catálogo MexicoConstructora25</h1>
+        
+        <!-- Formulario -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-gray-50 p-4 rounded border">
+            <input type="text" id="id" placeholder="ID" class="border p-2 rounded">
+            <input type="text" id="nombre" placeholder="Nombre" class="border p-2 rounded">
+            <input type="text" id="categoria" placeholder="Categoría" class="border p-2 rounded">
+            <input type="text" id="unidad" placeholder="Unidad" class="border p-2 rounded">
+            <input type="number" id="precio" placeholder="Precio" class="border p-2 rounded">
+            <input type="text" id="proveedor" placeholder="Proveedor" class="border p-2 rounded">
+            <input type="text" id="cc" placeholder="C.C" class="border p-2 rounded">
+            <button onclick="guardarRegistro()" class="bg-blue-600 text-white rounded hover:bg-blue-700 transition">Guardar Producto</button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse bg-white shadow-sm">
+                <thead>
+                    <tr class="bg-blue-800 text-white">
+                        <th class="p-2 border">ID</th>
+                        <th class="p-2 border">Nombre</th>
+                        <th class="p-2 border">Categoría</th>
+                        <th class="p-2 border">Unidad</th>
+                        <th class="p-2 border">Precio</th>
+                        <th class="p-2 border">Proveedor</th>
+                        <th class="p-2 border">C.C</th>
+                        <th class="p-2 border">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="listaCatalogo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mexicoconstructora25';
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwz6HN3tHtYl7L72Y0tqjPX3pxUzbHD7T6Xa77cQ_KIUdo78I0TDbUE_AjrdUpkCOx9/exec";
+
+        enableIndexedDbPersistence(db).catch(err => console.log("Modo offline activo"));
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) signInAnonymously(auth);
+            else {
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'catalogo');
+                onSnapshot(q, (snap) => {
+                    const tbody = document.getElementById('listaCatalogo');
+                    tbody.innerHTML = '';
+                    snap.forEach(docSnap => {
+                        const d = docSnap.data();
+                        tbody.innerHTML += `<tr>
+                            <td class="p-2 border">${d.id || ''}</td>
+                            <td class="p-2 border">${d.nombre || ''}</td>
+                            <td class="p-2 border">${d.categoria || ''}</td>
+                            <td class="p-2 border">${d.unidad || ''}</td>
+                            <td class="p-2 border">$${d.precio || 0}</td>
+                            <td class="p-2 border">${d.proveedor || ''}</td>
+                            <td class="p-2 border">${d.cc || ''}</td>
+                            <td class="p-2 border"><button onclick="eliminar('${docSnap.id}')" class="text-red-500 font-bold">Borrar</button></td>
+                        </tr>`;
+                    });
+                });
+            }
+        });
+
+        window.guardarRegistro = async () => {
+            const data = {
+                id: document.getElementById('id').value,
+                nombre: document.getElementById('nombre').value,
+                categoria: document.getElementById('categoria').value,
+                unidad: document.getElementById('unidad').value,
+                precio: document.getElementById('precio').value,
+                proveedor: document.getElementById('proveedor').value,
+                cc: document.getElementById('cc').value
+            };
+
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'catalogo'), data);
+            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+            alert("Producto guardado en Nube y Sheets");
+        };
+
+        window.eliminar = async (id) => {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'catalogo', id));
+        };
+    </script>
+</body>
+</html>
