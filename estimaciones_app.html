@@ -17,7 +17,6 @@ button{cursor:pointer}
 .sidebar{width:220px;min-width:220px;background:#fff;border-right:0.5px solid #e0deda;display:flex;flex-direction:column;padding:16px 0}
 .sidebar-logo{padding:0 16px 16px;border-bottom:0.5px solid #e0deda;margin-bottom:8px}
 .sidebar-logo h2{font-size:15px;font-weight:600}
-.sidebar-logo p{font-size:11px;color:#999;margin-top:2px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:#5a5a5a;font-size:13px;transition:background .15s;border-left:3px solid transparent}
 .nav-item:hover{background:#f0efe9}
 .nav-item.active{background:#eff6ff;color:#2563eb;font-weight:500;border-left-color:#2563eb}
@@ -31,6 +30,7 @@ button{cursor:pointer}
 .btn-primary:hover{background:#1d4ed8}
 .btn-danger{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
 .btn-success{background:#f0fdf4;color:#16a34a;border-color:#86efac}
+.btn-warning{background:#fffbeb;color:#b45309;border-color:#fcd34d}
 .btn-sm{padding:4px 10px;font-size:12px}
 .card{background:#fff;border:0.5px solid #e0deda;border-radius:12px;padding:20px}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -48,13 +48,14 @@ tr:hover td{background:#f8f7f4}
 .badge-blue{background:#eff6ff;color:#2563eb}
 .badge-amber{background:#fffbeb;color:#b45309}
 .badge-purple{background:#faf5ff;color:#7c3aed}
+.badge-red{background:#fef2f2;color:#dc2626}
 .form-group{margin-bottom:14px}
 .form-group label{display:block;font-size:12px;font-weight:500;color:#5a5a5a;margin-bottom:5px}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:7px 10px;border:0.5px solid #cccac4;border-radius:8px;background:#fff;color:#1a1a1a;outline:none}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#2563eb}
+.form-group input:disabled{background:#f8f7f4;color:#999}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal{background:#fff;border-radius:12px;width:560px;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal-wide{width:700px}
 .modal-header{padding:18px 20px;border-bottom:0.5px solid #e0deda;display:flex;align-items:center;justify-content:space-between}
 .modal-header h3{font-size:15px;font-weight:600}
 .modal-body{padding:20px}
@@ -72,37 +73,48 @@ tr:hover td{background:#f8f7f4}
 .est-list-item{padding:12px 16px;border-bottom:0.5px solid #e0deda;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
 .est-list-item:hover{background:#f8f7f4}
 .est-list-item.sel{background:#eff6ff;border-left-color:#2563eb}
-/* Pantalla de selección de perfil */
-.profile-screen{position:fixed;inset:0;background:#f0efe9;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200}
-.profile-card{background:#fff;border:0.5px solid #e0deda;border-radius:16px;padding:32px 40px;text-align:center;cursor:pointer;transition:all .2s;width:200px}
-.profile-card:hover{border-color:#2563eb;box-shadow:0 4px 20px rgba(37,99,235,.15);transform:translateY(-2px)}
-.profile-card i{font-size:40px;display:block;margin-bottom:12px}
-.profile-card h3{font-size:15px;font-weight:600;margin-bottom:4px}
-.profile-card p{font-size:12px;color:#999}
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:#f0efe9;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200}
+.login-box{background:#fff;border:0.5px solid #e0deda;border-radius:16px;padding:36px 40px;width:380px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
+.login-profiles{display:flex;gap:12px;margin-bottom:24px}
+.profile-btn{flex:1;padding:14px 10px;border-radius:10px;border:2px solid #e0deda;background:#fff;cursor:pointer;text-align:center;transition:all .15s}
+.profile-btn:hover{border-color:#2563eb;background:#eff6ff}
+.profile-btn.active{border-color:#2563eb;background:#eff6ff}
+.profile-btn i{font-size:24px;display:block;margin-bottom:6px}
+.profile-btn span{font-size:12px;font-weight:600;display:block}
+.profile-btn small{font-size:11px;color:#999}
+.login-err{background:#fef2f2;border:0.5px solid #fca5a5;color:#dc2626;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:12px}
 /* Panel empresa */
 .empresa-preview{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);border-radius:12px;padding:24px;color:#fff;margin-bottom:20px}
 /* Catálogo con panel lateral */
-.cat-layout{display:grid;grid-template-columns:1fr 380px;gap:16px;height:calc(100vh - 130px)}
+.cat-layout{display:grid;grid-template-columns:1fr 380px;gap:16px;height:calc(100vh - 150px)}
 .cat-panel{background:#fff;border:0.5px solid #e0deda;border-radius:12px;overflow:auto}
-/* Row seleccionada en catálogo */
 tr.cat-sel td{background:#eff6ff!important}
-/* Checkbox estilo */
 .chk-row{display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;border:0.5px solid #e0deda;margin-bottom:6px}
 .chk-row:hover{background:#f8f7f4}
 .chk-row.vigente{border-color:#86efac;background:#f0fdf4}
 .chk-box{width:18px;height:18px;border-radius:4px;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .chk-box.on{background:#16a34a;border-color:#16a34a}
-/* Rol badge */
 .rol-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
 .rol-admin{background:#faf5ff;color:#7c3aed;border:0.5px solid #d8b4fe}
 .rol-user{background:#eff6ff;color:#2563eb;border:0.5px solid #bfdbfe}
+/* folio badge */
+.folio{font-family:monospace;font-size:12px;font-weight:700;color:#2563eb;background:#eff6ff;padding:2px 8px;border-radius:6px;border:0.5px solid #bfdbfe}
+/* inline edit */
+.inline-edit{border:none;background:transparent;width:100%;outline:none;font-size:13px;font-family:inherit;padding:2px 4px}
+.inline-edit:focus{background:#fffbeb;border-radius:4px;outline:0.5px solid #fcd34d}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useRef}=React;
+const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
+
+// ── Contraseñas por defecto (hash simple: btoa) ──────────────────────────────
+const DEFAULT_CREDS={admin:'admin123',user:'user123'};
+
+function hashPwd(p){return btoa(unescape(encodeURIComponent(p)));}
 
 function parseCSV(text){
   const lines=text.trim().split('\n');
@@ -120,6 +132,24 @@ const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).fo
 const fmtN=n=>new Intl.NumberFormat('es-MX').format(n||0);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
 
+// Genera folio consecutivo EST-001, EST-002 …
+function genFolio(estimaciones){
+  const nums=estimaciones.map(e=>{
+    const m=e.folio?.match(/EST-(\d+)/);
+    return m?parseInt(m[1]):0;
+  });
+  const next=(nums.length?Math.max(...nums):0)+1;
+  return`EST-${String(next).padStart(3,'0')}`;
+}
+
+// Exporta catálogo local a CSV descargable
+function exportCSV(rows){
+  const heads=['Nombre','Categoria','Unidad','Precio','Proveedor','CC'];
+  const lines=[heads.join(','),...rows.map(r=>heads.map(h=>`"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','))];
+  const blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='catalogo_estimaciones.csv';a.click();
+}
+
 const DEMO=[
   {id:'1',Nombre:'Cemento gris 50kg',Categoria:'Materiales',Unidad:'Saco',Precio:'195.00',Proveedor:'CEMEX',CC:'MAT-001'},
   {id:'2',Nombre:'Varilla 3/8" x 12m',Categoria:'Acero',Unidad:'Pieza',Precio:'285.00',Proveedor:'DEACERO',CC:'ACR-002'},
@@ -131,32 +161,72 @@ const DEMO=[
   {id:'8',Nombre:'Cable THW-LS 10AWG',Categoria:'Eléctrico',Unidad:'Metro',Precio:'28.50',Proveedor:'CONDUMEX',CC:'ELE-008'},
 ];
 
-// ─── Pantalla de selección de perfil ───────────────────────────────────────
-function ProfileScreen({onSelect}){
+// ══════════════════════════════════════════════════════════════════════════════
+// PANTALLA DE LOGIN
+// ══════════════════════════════════════════════════════════════════════════════
+function LoginScreen({onLogin,creds}){
+  const [perfil,setPerfil]=useState('admin');
+  const [pwd,setPwd]=useState('');
+  const [showPwd,setShowPwd]=useState(false);
+  const [err,setErr]=useState('');
+
+  function handleLogin(){
+    const expected=creds[perfil]||hashPwd(DEFAULT_CREDS[perfil]);
+    if(hashPwd(pwd)===expected){
+      setErr('');onLogin(perfil);
+    }else{
+      setErr('Contraseña incorrecta. Intenta de nuevo.');
+    }
+  }
+
   return(
-    <div className="profile-screen">
-      <div style={{marginBottom:32,textAlign:'center'}}>
-        <div style={{fontSize:32,marginBottom:8}}>🏗️</div>
-        <h1 style={{fontSize:22,fontWeight:700,marginBottom:4}}>App de Estimaciones</h1>
-        <p style={{color:'#999',fontSize:13}}>Selecciona tu perfil para continuar</p>
-      </div>
-      <div style={{display:'flex',gap:20}}>
-        <div className="profile-card" onClick={()=>onSelect('admin')}>
-          <i className="ti ti-shield-check" style={{color:'#7c3aed'}}/>
-          <h3>Administrador</h3>
-          <p>Acceso completo</p>
+    <div className="login-screen">
+      <div className="login-box">
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <div style={{fontSize:28,marginBottom:8}}>🏗️</div>
+          <h2 style={{fontSize:18,fontWeight:700}}>App de Estimaciones</h2>
+          <p style={{fontSize:12,color:'#999',marginTop:4}}>Ingresa con tu perfil</p>
         </div>
-        <div className="profile-card" onClick={()=>onSelect('user')}>
-          <i className="ti ti-user" style={{color:'#2563eb'}}/>
-          <h3>Usuario</h3>
-          <p>Solo estimaciones</p>
+        <div className="login-profiles">
+          <div className={`profile-btn${perfil==='admin'?' active':''}`} onClick={()=>{setPerfil('admin');setPwd('');setErr('');}}>
+            <i className="ti ti-shield-check" style={{color:'#7c3aed'}}/>
+            <span>Administrador</span>
+            <small>Acceso completo</small>
+          </div>
+          <div className={`profile-btn${perfil==='user'?' active':''}`} onClick={()=>{setPerfil('user');setPwd('');setErr('');}}>
+            <i className="ti ti-user" style={{color:'#2563eb'}}/>
+            <span>Usuario</span>
+            <small>Solo estimaciones</small>
+          </div>
         </div>
+        {err&&<div className="login-err"><i className="ti ti-alert-circle"/> {err}</div>}
+        <div className="form-group" style={{marginBottom:16,position:'relative'}}>
+          <label>Contraseña</label>
+          <div style={{position:'relative'}}>
+            <input
+              type={showPwd?'text':'password'}
+              value={pwd}
+              onChange={e=>{setPwd(e.target.value);setErr('');}}
+              onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+              placeholder="Ingresa tu contraseña"
+              style={{paddingRight:36}}
+            />
+            <button onClick={()=>setShowPwd(v=>!v)} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'#999',padding:0,fontSize:16}}>
+              <i className={`ti ${showPwd?'ti-eye-off':'ti-eye'}`}/>
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={handleLogin}>
+          <i className="ti ti-login"/>Ingresar
+        </button>
       </div>
     </div>
   );
 }
 
-// ─── App principal ──────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// APP PRINCIPAL
+// ══════════════════════════════════════════════════════════════════════════════
 function App(){
   const [perfil,setPerfil]=useState(null);
   const [view,setView]=useState('dashboard');
@@ -167,6 +237,9 @@ function App(){
   const [estimaciones,setEstimaciones]=useState([]);
   const [histPrecios,setHistPrecios]=useState([]);
   const [empresa,setEmpresa]=useState({nombre:'Mi Empresa Constructora',sector:'Construcción',obra:'',logo:null,telefono:'',correo:'',direccion:''});
+  const [catalogoExtra,setCatalogoExtra]=useState([]);
+  // Contraseñas hasheadas
+  const [creds,setCreds]=useState({admin:hashPwd('admin123'),user:hashPwd('user123')});
 
   useEffect(()=>{
     const saved=localStorage.getItem('estimaciones_v1');
@@ -176,20 +249,18 @@ function App(){
       setHistPrecios(d.hp||[]);
       if(d.empresa)setEmpresa(d.empresa);
       if(d.catalogo_extra)setCatalogoExtra(d.catalogo_extra||[]);
+      if(d.creds)setCreds(d.creds);
     }
     loadSheet();
   },[]);
 
-  // Catálogo extra (creado desde la app)
-  const [catalogoExtra,setCatalogoExtra]=useState([]);
-
-  function save(est,hp,emp,ce){
-    localStorage.setItem('estimaciones_v1',JSON.stringify({
-      est:est!==undefined?est:estimaciones,
-      hp:hp!==undefined?hp:histPrecios,
-      empresa:emp!==undefined?emp:empresa,
-      catalogo_extra:ce!==undefined?ce:catalogoExtra,
-    }));
+  function saveAll(overrides={}){
+    const state={
+      est:estimaciones,hp:histPrecios,empresa,
+      catalogo_extra:catalogoExtra,creds,
+      ...overrides
+    };
+    localStorage.setItem('estimaciones_v1',JSON.stringify(state));
   }
 
   async function loadSheet(){
@@ -210,17 +281,20 @@ function App(){
   const closeModal=()=>setModal(null);
 
   function saveEst(e){
-    const next=e.id?estimaciones.map(x=>x.id===e.id?e:x):[...estimaciones,{...e,id:uid(),fecha:new Date().toLocaleDateString('es-MX'),items:[],total:0}];
-    setEstimaciones(next);save(next,undefined,undefined,undefined);closeModal();
+    const folio=e.folio||genFolio(estimaciones);
+    const next=e.id
+      ?estimaciones.map(x=>x.id===e.id?{...e,folio}:x)
+      :[...estimaciones,{...e,id:uid(),folio,fecha:new Date().toLocaleDateString('es-MX'),items:[],total:0}];
+    setEstimaciones(next);saveAll({est:next});closeModal();
   }
-  function delEst(id){const next=estimaciones.filter(e=>e.id!==id);setEstimaciones(next);save(next,undefined,undefined,undefined);}
+  function delEst(id){const next=estimaciones.filter(e=>e.id!==id);setEstimaciones(next);saveAll({est:next});}
   function addItem(estId,item){
     const next=estimaciones.map(e=>{
       if(e.id!==estId)return e;
       const items=[...(e.items||[]),{...item,id:uid()}];
       return{...e,items,total:items.reduce((s,i)=>s+(+i.precio*+i.cantidad||0),0)};
     });
-    setEstimaciones(next);save(next,undefined,undefined,undefined);closeModal();
+    setEstimaciones(next);saveAll({est:next});closeModal();
   }
   function removeItem(estId,itemId){
     const next=estimaciones.map(e=>{
@@ -228,35 +302,40 @@ function App(){
       const items=e.items.filter(i=>i.id!==itemId);
       return{...e,items,total:items.reduce((s,i)=>s+(+i.precio*+i.cantidad||0),0)};
     });
-    setEstimaciones(next);save(next,undefined,undefined,undefined);
+    setEstimaciones(next);saveAll({est:next});
   }
   function savePrecio(p){
     let next=[...histPrecios];
     if(p.vigente)next=next.map(x=>x.material===p.material&&x.proveedor===p.proveedor?{...x,vigente:false}:x);
     next=[...next,{...p,id:uid(),fecha:new Date().toLocaleDateString('es-MX')}];
-    setHistPrecios(next);save(undefined,next,undefined,undefined);closeModal();
+    setHistPrecios(next);saveAll({hp:next});closeModal();
   }
   function toggleVigente(pid){
     const p=histPrecios.find(x=>x.id===pid);if(!p)return;
     const next=histPrecios.map(x=>x.material===p.material&&x.proveedor===p.proveedor?{...x,vigente:x.id===pid}:x);
-    setHistPrecios(next);save(undefined,next,undefined,undefined);
+    setHistPrecios(next);saveAll({hp:next});
   }
-  function saveEmpresa(e){
-    setEmpresa(e);save(undefined,undefined,e,undefined);closeModal();
-  }
+  function saveEmpresa(e){setEmpresa(e);saveAll({empresa:e});closeModal();}
   function saveNuevoConcepto(c){
     const next=[...catalogoExtra,{...c,id:uid(),fuente:'local'}];
-    setCatalogoExtra(next);save(undefined,undefined,undefined,next);closeModal();
+    setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
+  }
+  function updateConcepto(id,field,value){
+    const next=catalogoExtra.map(c=>c.id===id?{...c,[field]:value}:c);
+    setCatalogoExtra(next);saveAll({catalogo_extra:next});
   }
   function delConcepto(id){
     const next=catalogoExtra.filter(c=>c.id!==id);
-    setCatalogoExtra(next);save(undefined,undefined,undefined,next);
+    setCatalogoExtra(next);saveAll({catalogo_extra:next});
+  }
+  function changeCreds(role,newPwd){
+    const next={...creds,[role]:hashPwd(newPwd)};
+    setCreds(next);saveAll({creds:next});
   }
 
   const catTotal=[...catalogo,...catalogoExtra];
   const totalEstimado=estimaciones.reduce((s,e)=>s+(e.total||0),0);
 
-  // Navegación según perfil
   const navAdmin=[
     {id:'dashboard',icon:'ti-dashboard',label:'Dashboard'},
     {id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'},
@@ -264,27 +343,27 @@ function App(){
     {id:'precios',icon:'ti-tags',label:'Historial precios'},
     {id:'reportes',icon:'ti-chart-bar',label:'Reportes'},
     {id:'empresa',icon:'ti-building',label:'Empresa'},
+    {id:'seguridad',icon:'ti-lock',label:'Seguridad'},
   ];
-  const navUser=[
-    {id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'},
-  ];
+  const navUser=[{id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'}];
   const nav=perfil==='admin'?navAdmin:navUser;
 
-  if(!perfil) return <ProfileScreen onSelect={p=>{setPerfil(p);setView(p==='user'?'estimaciones':'dashboard');}}/>;
+  if(!perfil) return <LoginScreen onLogin={p=>{setPerfil(p);setView(p==='user'?'estimaciones':'dashboard');}} creds={creds}/>;
 
   return(
     <div className="app">
       <aside className="sidebar">
         <div className="sidebar-logo">
           {empresa.logo
-            ?<img src={empresa.logo} alt="logo" style={{height:32,marginBottom:6,objectFit:'contain'}}/>
+            ?<img src={empresa.logo} alt="logo" style={{height:32,marginBottom:4,objectFit:'contain'}}/>
             :<h2>🏗️ {empresa.nombre}</h2>
           }
-          <p style={{display:'flex',alignItems:'center',gap:6}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginTop:4}}>
             <span className={`rol-tag ${perfil==='admin'?'rol-admin':'rol-user'}`}>
-              <i className={`ti ${perfil==='admin'?'ti-shield-check':'ti-user'}`} style={{fontSize:10}}/>{perfil==='admin'?'Admin':'Usuario'}
+              <i className={`ti ${perfil==='admin'?'ti-shield-check':'ti-user'}`} style={{fontSize:10}}/>
+              {perfil==='admin'?'Admin':'Usuario'}
             </span>
-          </p>
+          </div>
         </div>
         {nav.map(n=>(
           <div key={n.id} className={`nav-item${view===n.id?' active':''}`} onClick={()=>setView(n.id)}>
@@ -294,7 +373,7 @@ function App(){
         <div style={{flex:1}}/>
         {perfil==='admin'&&<div className="nav-item" onClick={loadSheet}><i className="ti ti-refresh"/>Sincronizar Sheet</div>}
         <div className="nav-item" style={{color:'#dc2626'}} onClick={()=>{setPerfil(null);setView('dashboard');}}>
-          <i className="ti ti-logout"/>Cambiar perfil
+          <i className="ti ti-logout"/>Salir
         </div>
       </aside>
       <div className="main">
@@ -304,16 +383,17 @@ function App(){
           :<>
             {view==='dashboard'&&<Dashboard est={estimaciones} cat={catTotal} hp={histPrecios} fmt={fmt} fmtN={fmtN} total={totalEstimado} setView={setView} openModal={openModal}/>}
             {view==='estimaciones'&&<Estimaciones est={estimaciones} cat={catTotal} hp={histPrecios} fmt={fmt} fmtN={fmtN} openModal={openModal} delEst={delEst} removeItem={removeItem} perfil={perfil}/>}
-            {view==='catalogo'&&perfil==='admin'&&<Catalogo cat={catTotal} catalogoExtra={catalogoExtra} fmt={fmt} hp={histPrecios} savePrecio={savePrecio} toggleVigente={toggleVigente} openModal={openModal} delConcepto={delConcepto}/>}
+            {view==='catalogo'&&perfil==='admin'&&<Catalogo cat={catTotal} catalogoExtra={catalogoExtra} fmt={fmt} hp={histPrecios} savePrecio={savePrecio} toggleVigente={toggleVigente} openModal={openModal} delConcepto={delConcepto} updateConcepto={updateConcepto}/>}
             {view==='precios'&&perfil==='admin'&&<HistPrecios hp={histPrecios} cat={catTotal} est={estimaciones} fmt={fmt} fmtN={fmtN} openModal={openModal} toggleVigente={toggleVigente}/>}
             {view==='reportes'&&perfil==='admin'&&<Reportes est={estimaciones} fmt={fmt} fmtN={fmtN}/>}
             {view==='empresa'&&perfil==='admin'&&<VistaEmpresa empresa={empresa} onSave={saveEmpresa}/>}
+            {view==='seguridad'&&perfil==='admin'&&<Seguridad onChangeCreds={changeCreds}/>}
           </>
         }
       </div>
       {modal&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&closeModal()}>
-          {modal.t==='nueva-est'&&<ModalNuevaEst onSave={saveEst} onClose={closeModal}/>}
+          {modal.t==='nueva-est'&&<ModalNuevaEst estimaciones={estimaciones} onSave={saveEst} onClose={closeModal}/>}
           {modal.t==='add-item'&&<ModalAddItem estId={modal.d} cat={catTotal} hp={histPrecios} onSave={addItem} onClose={closeModal}/>}
           {modal.t==='nuevo-precio'&&<ModalNuevoPrecio cat={catTotal} onSave={savePrecio} onClose={closeModal}/>}
           {modal.t==='nuevo-concepto'&&<ModalNuevoConcepto onSave={saveNuevoConcepto} onClose={closeModal}/>}
@@ -323,7 +403,9 @@ function App(){
   );
 }
 
-// ─── Dashboard ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════
 function Dashboard({est,cat,hp,fmt,fmtN,total,setView,openModal}){
   const provMap={};
   est.forEach(e=>(e.items||[]).forEach(i=>{
@@ -358,9 +440,14 @@ function Dashboard({est,cat,hp,fmt,fmtN,total,setView,openModal}){
           <p style={{fontWeight:600,fontSize:13,marginBottom:14,color:'#5a5a5a'}}>Últimas estimaciones</p>
           {est.length===0
             ?<div className="empty-state"><i className="ti ti-clipboard-x"/><p>Sin estimaciones aún</p></div>
-            :<table><thead><tr><th>Nombre</th><th>Fecha</th><th>Ítems</th><th>Total</th></tr></thead>
+            :<table><thead><tr><th>Folio</th><th>Nombre</th><th>Fecha</th><th>Total</th></tr></thead>
               <tbody>{est.slice(-5).reverse().map(e=>(
-                <tr key={e.id}><td style={{fontWeight:500}}>{e.nombre}</td><td style={{color:'#999',fontSize:12}}>{e.fecha}</td><td><span className="badge badge-blue">{e.items?.length||0}</span></td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(e.total)}</td></tr>
+                <tr key={e.id}>
+                  <td><span className="folio">{e.folio||'—'}</span></td>
+                  <td style={{fontWeight:500}}>{e.nombre}</td>
+                  <td style={{color:'#999',fontSize:12}}>{e.fecha}</td>
+                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(e.total)}</td>
+                </tr>
               ))}</tbody></table>
           }
         </div>
@@ -379,13 +466,14 @@ function Dashboard({est,cat,hp,fmt,fmtN,total,setView,openModal}){
   );
 }
 
-// ─── Estimaciones ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ESTIMACIONES
+// ══════════════════════════════════════════════════════════════════════════════
 function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
   const [sel,setSel]=useState(null);
   const [tab,setTab]=useState('items');
   const s=est.find(e=>e.id===sel);
   const isAdmin=perfil==='admin';
-
   const byProv={};const byMat={};
   (s?.items||[]).forEach(i=>{
     const p=i.proveedor||'N/A';const m=i.material||'N/A';
@@ -412,8 +500,11 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
               <div key={e.id} className={`est-list-item${sel===e.id?' sel':''}`} onClick={()=>{setSel(e.id);setTab('items');}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                   <div>
-                    <p style={{fontWeight:500}}>{e.nombre}</p>
-                    <p style={{fontSize:11,color:'#999',marginTop:2}}>{e.obra||'Sin obra'} · {e.fecha}</p>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}>
+                      <span className="folio">{e.folio||'—'}</span>
+                      <p style={{fontWeight:500,fontSize:13}}>{e.nombre}</p>
+                    </div>
+                    <p style={{fontSize:11,color:'#999'}}>{e.obra||'Sin obra'} · {e.fecha}</p>
                   </div>
                   <div style={{textAlign:'right'}}>
                     <p style={{fontWeight:700,color:'#16a34a'}}>{fmt(e.total)}</p>
@@ -435,9 +526,18 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
             ?<div className="empty-state"><i className="ti ti-hand-click"/><p>Selecciona una estimación</p></div>
             :<>
               <div style={{padding:'14px 16px',borderBottom:'0.5px solid #e0deda'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-                  <div><p style={{fontWeight:600,fontSize:14}}>{s.nombre}</p><p style={{fontSize:11,color:'#999'}}>{s.obra} · {s.fecha}</p></div>
-                  <div style={{textAlign:'right'}}><p style={{fontWeight:700,color:'#16a34a',fontSize:16}}>{fmt(s.total)}</p><p style={{fontSize:11,color:'#999'}}>Total</p></div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                  <div>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                      <span className="folio" style={{fontSize:13}}>{s.folio}</span>
+                    </div>
+                    <p style={{fontWeight:600,fontSize:14}}>{s.nombre}</p>
+                    <p style={{fontSize:11,color:'#999'}}>{s.obra} · {s.fecha}</p>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <p style={{fontWeight:700,color:'#16a34a',fontSize:16}}>{fmt(s.total)}</p>
+                    <p style={{fontSize:11,color:'#999'}}>Total</p>
+                  </div>
                 </div>
                 <div className="tabs" style={{marginBottom:0}}>
                   {[['items','Ítems'],['prov','Por proveedor'],['mat','Por material']].map(([k,l])=>(
@@ -464,25 +564,17 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
                       ))}</tbody>
                     </table>
                 )}
-                {tab==='prov'&&(
-                  Object.keys(byProv).length===0
-                    ?<div className="empty-state"><i className="ti ti-truck-off"/><p>Sin datos</p></div>
-                    :<table>
-                      <thead><tr><th>Proveedor</th><th>Cant. acumulada</th><th>Monto acumulado</th></tr></thead>
-                      <tbody>{Object.entries(byProv).map(([p,v])=>(
-                        <tr key={p}><td style={{fontWeight:500}}>{p}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>
-                      ))}</tbody>
-                    </table>
+                {tab==='prov'&&(Object.keys(byProv).length===0
+                  ?<div className="empty-state"><i className="ti ti-truck-off"/><p>Sin datos</p></div>
+                  :<table><thead><tr><th>Proveedor</th><th>Cant.</th><th>Monto</th></tr></thead>
+                    <tbody>{Object.entries(byProv).map(([p,v])=>(<tr key={p}><td style={{fontWeight:500}}>{p}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>))}</tbody>
+                  </table>
                 )}
-                {tab==='mat'&&(
-                  Object.keys(byMat).length===0
-                    ?<div className="empty-state"><i className="ti ti-package-off"/><p>Sin datos</p></div>
-                    :<table>
-                      <thead><tr><th>Material</th><th>Unidad</th><th>Cant. acumulada</th><th>Monto acumulado</th></tr></thead>
-                      <tbody>{Object.entries(byMat).map(([m,v])=>(
-                        <tr key={m}><td style={{fontWeight:500}}>{m}</td><td>{v.unidad}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>
-                      ))}</tbody>
-                    </table>
+                {tab==='mat'&&(Object.keys(byMat).length===0
+                  ?<div className="empty-state"><i className="ti ti-package-off"/><p>Sin datos</p></div>
+                  :<table><thead><tr><th>Material</th><th>Unidad</th><th>Cant.</th><th>Monto</th></tr></thead>
+                    <tbody>{Object.entries(byMat).map(([m,v])=>(<tr key={m}><td style={{fontWeight:500}}>{m}</td><td>{v.unidad}</td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td></tr>))}</tbody>
+                  </table>
                 )}
               </div>
             </>
@@ -493,8 +585,10 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
   );
 }
 
-// ─── Catálogo con panel de precios inline ────────────────────────────────────
-function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,delConcepto}){
+// ══════════════════════════════════════════════════════════════════════════════
+// CATÁLOGO con edición inline y panel de precios
+// ══════════════════════════════════════════════════════════════════════════════
+function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,delConcepto,updateConcepto}){
   const [q,setQ]=useState('');
   const [selId,setSelId]=useState(null);
   const [showAddPrecio,setShowAddPrecio]=useState(false);
@@ -503,7 +597,6 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
   const f=cat.filter(c=>!q||[c.Nombre,c.Proveedor,c.Categoria].some(x=>x?.toLowerCase().includes(q.toLowerCase())));
   const selItem=cat.find(c=>c.id===selId);
   const preciosItem=selItem?hp.filter(p=>p.material===selItem.Nombre&&p.proveedor===selItem.Proveedor):[];
-  const esLocal=selItem&&catalogoExtra.some(c=>c.id===selItem.id);
 
   function handleAddPrecio(){
     if(!npForm.precio||!selItem)return;
@@ -515,14 +608,18 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
     <div className="content" style={{paddingBottom:0}}>
       <div className="page-header">
         <h1>Catálogo de productos</h1>
-        <div style={{display:'flex',gap:8}}>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <span className="badge badge-blue">{cat.length} productos</span>
+          {catalogoExtra.length>0&&(
+            <button className="btn btn-sm btn-warning" onClick={()=>exportCSV(catalogoExtra)}>
+              <i className="ti ti-table-export"/>Exportar locales CSV
+            </button>
+          )}
           <button className="btn btn-primary" onClick={()=>openModal('nuevo-concepto')}><i className="ti ti-plus"/>Nuevo concepto</button>
         </div>
       </div>
       <div className="search-bar"><i className="ti ti-search" style={{color:'#999'}}/><input placeholder="Buscar nombre, proveedor, categoría..." value={q} onChange={e=>setQ(e.target.value)}/></div>
       <div className="cat-layout">
-        {/* Tabla izquierda */}
         <div className="cat-panel" style={{padding:0}}>
           <table>
             <thead><tr><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Precio</th><th>Proveedor</th><th></th></tr></thead>
@@ -534,13 +631,31 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
                   return(
                     <tr key={i} className={selId===c.id?'cat-sel':''} style={{cursor:'pointer'}} onClick={()=>{setSelId(c.id);setShowAddPrecio(false);}}>
                       <td style={{fontWeight:500}}>
-                        {c.Nombre}
+                        {local
+                          ?<input className="inline-edit" defaultValue={c.Nombre} onBlur={e=>updateConcepto(c.id,'Nombre',e.target.value)} onClick={ev=>ev.stopPropagation()}/>
+                          :c.Nombre
+                        }
                         {local&&<span className="badge badge-amber" style={{marginLeft:6,fontSize:10}}>Local</span>}
                       </td>
                       <td><span className="chip">{c.Categoria}</span></td>
-                      <td>{c.Unidad}</td>
-                      <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+c.Precio||0)}</td>
-                      <td>{c.Proveedor}</td>
+                      <td>
+                        {local
+                          ?<input className="inline-edit" defaultValue={c.Unidad} onBlur={e=>updateConcepto(c.id,'Unidad',e.target.value)} onClick={ev=>ev.stopPropagation()} style={{width:60}}/>
+                          :c.Unidad
+                        }
+                      </td>
+                      <td style={{fontWeight:600,color:'#16a34a'}}>
+                        {local
+                          ?<input className="inline-edit" type="number" defaultValue={c.Precio} onBlur={e=>updateConcepto(c.id,'Precio',e.target.value)} onClick={ev=>ev.stopPropagation()} style={{width:80}}/>
+                          :fmt(+c.Precio||0)
+                        }
+                      </td>
+                      <td>
+                        {local
+                          ?<input className="inline-edit" defaultValue={c.Proveedor} onBlur={e=>updateConcepto(c.id,'Proveedor',e.target.value)} onClick={ev=>ev.stopPropagation()}/>
+                          :c.Proveedor
+                        }
+                      </td>
                       <td>{local&&<button className="btn btn-sm btn-danger" onClick={ev=>{ev.stopPropagation();if(confirm('¿Eliminar?'))delConcepto(c.id);}}><i className="ti ti-trash"/></button>}</td>
                     </tr>
                   );
@@ -549,10 +664,10 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
             </tbody>
           </table>
         </div>
-        {/* Panel derecho de precios */}
+        {/* Panel derecho */}
         <div className="cat-panel" style={{padding:16}}>
           {!selItem
-            ?<div className="empty-state"><i className="ti ti-hand-click"/><p>Selecciona un producto para ver y gestionar sus precios</p></div>
+            ?<div className="empty-state"><i className="ti ti-hand-click"/><p>Selecciona un producto para gestionar sus precios</p></div>
             :<>
               <div style={{marginBottom:16}}>
                 <p style={{fontWeight:600,fontSize:14}}>{selItem.Nombre}</p>
@@ -560,7 +675,7 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
                 <p style={{fontSize:13,color:'#16a34a',fontWeight:600,marginTop:4}}>Precio catálogo: {fmt(+selItem.Precio||0)}</p>
               </div>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-                <p style={{fontWeight:600,fontSize:13,color:'#5a5a5a'}}>Historial de precios ({preciosItem.length})</p>
+                <p style={{fontWeight:600,fontSize:13,color:'#5a5a5a'}}>Historial ({preciosItem.length})</p>
                 <button className="btn btn-sm btn-primary" onClick={()=>setShowAddPrecio(v=>!v)}>
                   <i className={`ti ${showAddPrecio?'ti-x':'ti-plus'}`}/>{showAddPrecio?'Cancelar':'Agregar precio'}
                 </button>
@@ -574,7 +689,7 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
                     </div>
                     <div className="form-group" style={{marginBottom:0}}>
                       <label>Notas</label>
-                      <input value={npForm.notas} onChange={e=>setNpForm(f=>({...f,notas:e.target.value}))} placeholder="Ej: Cotización 30 días"/>
+                      <input value={npForm.notas} onChange={e=>setNpForm(f=>({...f,notas:e.target.value}))} placeholder="Ej: Cot. 30 días"/>
                     </div>
                   </div>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8}}>
@@ -587,7 +702,7 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
                 </div>
               )}
               {preciosItem.length===0
-                ?<div style={{textAlign:'center',padding:24,color:'#999',fontSize:13}}>Sin precios registrados para este producto</div>
+                ?<div style={{textAlign:'center',padding:24,color:'#999',fontSize:13}}>Sin precios registrados</div>
                 :preciosItem.sort((a,b)=>b.fecha>a.fecha?1:-1).map(p=>(
                   <div key={p.id} className={`chk-row${p.vigente?' vigente':''}`} onClick={()=>toggleVigente(p.id)}>
                     <div className={`chk-box${p.vigente?' on':''}`}>{p.vigente&&<i className="ti ti-check" style={{color:'#fff',fontSize:11}}/>}</div>
@@ -609,7 +724,9 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
   );
 }
 
-// ─── Historial de precios ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// HISTORIAL PRECIOS
+// ══════════════════════════════════════════════════════════════════════════════
 function HistPrecios({hp,cat,est,fmt,fmtN,openModal,toggleVigente}){
   const [q,setQ]=useState('');
   const f=hp.filter(p=>!q||[p.material,p.proveedor].some(x=>x?.toLowerCase().includes(q.toLowerCase())));
@@ -631,7 +748,7 @@ function HistPrecios({hp,cat,est,fmt,fmtN,openModal,toggleVigente}){
           <thead><tr><th>Material</th><th>Proveedor</th><th>Precio</th><th>Fecha</th><th>Vigente</th><th>Cant. acum.</th><th>Monto acum.</th><th>Notas</th></tr></thead>
           <tbody>
             {f.length===0
-              ?<tr><td colSpan={8} style={{textAlign:'center',padding:32,color:'#999'}}>{hp.length===0?'Sin precios — haz clic en "Registrar precio"':'Sin resultados'}</td></tr>
+              ?<tr><td colSpan={8} style={{textAlign:'center',padding:32,color:'#999'}}>{hp.length===0?'Sin precios registrados':'Sin resultados'}</td></tr>
               :f.map(p=>{
                 const k=`${p.material}||${p.proveedor}||${p.precio}`;
                 const a=acum[k]||{qty:0,monto:0};
@@ -663,7 +780,9 @@ function HistPrecios({hp,cat,est,fmt,fmtN,openModal,toggleVigente}){
   );
 }
 
-// ─── Reportes ────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORTES
+// ══════════════════════════════════════════════════════════════════════════════
 function Reportes({est,fmt,fmtN}){
   const byProv={};const byCat={};
   est.forEach(e=>(e.items||[]).forEach(i=>{
@@ -685,13 +804,7 @@ function Reportes({est,fmt,fmtN}){
             :<table>
               <thead><tr><th>Proveedor</th><th>Estimaciones</th><th>Cant.</th><th>Monto</th><th>%</th></tr></thead>
               <tbody>{Object.entries(byProv).sort((a,b)=>b[1].monto-a[1].monto).map(([p,v])=>(
-                <tr key={p}>
-                  <td style={{fontWeight:500}}>{p}</td>
-                  <td><span className="badge badge-blue">{v.ests.size}</span></td>
-                  <td>{fmtN(v.qty)}</td>
-                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td>
-                  <td style={{fontSize:12,color:'#999'}}>{totMonto>0?((v.monto/totMonto)*100).toFixed(1)+'%':'—'}</td>
-                </tr>
+                <tr key={p}><td style={{fontWeight:500}}>{p}</td><td><span className="badge badge-blue">{v.ests.size}</span></td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td><td style={{fontSize:12,color:'#999'}}>{totMonto>0?((v.monto/totMonto)*100).toFixed(1)+'%':'—'}</td></tr>
               ))}</tbody>
             </table>
           }
@@ -703,12 +816,7 @@ function Reportes({est,fmt,fmtN}){
             :<table>
               <thead><tr><th>Categoría</th><th>Cant.</th><th>Monto</th><th>%</th></tr></thead>
               <tbody>{Object.entries(byCat).sort((a,b)=>b[1].monto-a[1].monto).map(([c,v])=>(
-                <tr key={c}>
-                  <td><span className="chip">{c}</span></td>
-                  <td>{fmtN(v.qty)}</td>
-                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td>
-                  <td style={{fontSize:12,color:'#999'}}>{totMonto>0?((v.monto/totMonto)*100).toFixed(1)+'%':'—'}</td>
-                </tr>
+                <tr key={c}><td><span className="chip">{c}</span></td><td>{fmtN(v.qty)}</td><td style={{fontWeight:600,color:'#16a34a'}}>{fmt(v.monto)}</td><td style={{fontSize:12,color:'#999'}}>{totMonto>0?((v.monto/totMonto)*100).toFixed(1)+'%':'—'}</td></tr>
               ))}</tbody>
             </table>
           }
@@ -719,19 +827,16 @@ function Reportes({est,fmt,fmtN}){
         {est.length===0
           ?<div className="empty-state" style={{padding:24}}><i className="ti ti-clipboard-x"/><p>Sin estimaciones</p></div>
           :<table>
-            <thead><tr><th>Estimación</th><th>Obra</th><th>Fecha</th><th>Ítems</th><th>Proveedores</th><th>Total</th></tr></thead>
+            <thead><tr><th>Folio</th><th>Estimación</th><th>Obra</th><th>Fecha</th><th>Ítems</th><th>Total</th></tr></thead>
             <tbody>{est.map(e=>{
-              const provs=[...new Set((e.items||[]).map(i=>i.proveedor).filter(Boolean))];
-              return(
-                <tr key={e.id}>
-                  <td style={{fontWeight:500}}>{e.nombre}</td>
-                  <td>{e.obra||'—'}</td>
-                  <td style={{color:'#999',fontSize:12}}>{e.fecha}</td>
-                  <td><span className="badge badge-blue">{e.items?.length||0}</span></td>
-                  <td style={{fontSize:12}}>{provs.join(', ')||'—'}</td>
-                  <td style={{fontWeight:700,color:'#16a34a'}}>{fmt(e.total)}</td>
-                </tr>
-              );
+              return(<tr key={e.id}>
+                <td><span className="folio">{e.folio||'—'}</span></td>
+                <td style={{fontWeight:500}}>{e.nombre}</td>
+                <td>{e.obra||'—'}</td>
+                <td style={{color:'#999',fontSize:12}}>{e.fecha}</td>
+                <td><span className="badge badge-blue">{e.items?.length||0}</span></td>
+                <td style={{fontWeight:700,color:'#16a34a'}}>{fmt(e.total)}</td>
+              </tr>);
             })}</tbody>
           </table>
         }
@@ -740,27 +845,19 @@ function Reportes({est,fmt,fmtN}){
   );
 }
 
-// ─── Vista Empresa ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// EMPRESA
+// ══════════════════════════════════════════════════════════════════════════════
 function VistaEmpresa({empresa,onSave}){
   const [f,setF]=useState({...empresa});
   const [editMode,setEditMode]=useState(false);
   const fileRef=useRef();
-
   const s=(k,v)=>setF(x=>({...x,[k]:v}));
-
   function handleLogo(e){
-    const file=e.target.files[0];
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=ev=>s('logo',ev.target.result);
-    reader.readAsDataURL(file);
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();reader.onload=ev=>s('logo',ev.target.result);reader.readAsDataURL(file);
   }
-
-  function handleSave(){
-    onSave(f);
-    setEditMode(false);
-  }
-
+  function handleSave(){onSave(f);setEditMode(false);}
   return(
     <div className="content">
       <div className="page-header">
@@ -773,8 +870,6 @@ function VistaEmpresa({empresa,onSave}){
           </div>
         }
       </div>
-
-      {/* Preview encabezado de estimación */}
       <div className="empresa-preview" style={{marginBottom:20}}>
         <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:12}}>
           {f.logo
@@ -792,53 +887,30 @@ function VistaEmpresa({empresa,onSave}){
           {f.direccion&&<span><i className="ti ti-map-pin" style={{marginRight:4}}/>{f.direccion}</span>}
           {f.obra&&<span><i className="ti ti-building-skyscraper" style={{marginRight:4}}/>Obra: {f.obra}</span>}
         </div>
-        <div style={{marginTop:12,paddingTop:10,borderTop:'0.5px solid rgba(255,255,255,.3)',fontSize:11,opacity:.6}}>
-          Vista previa del encabezado de estimaciones
-        </div>
+        <div style={{marginTop:12,paddingTop:10,borderTop:'0.5px solid rgba(255,255,255,.3)',fontSize:11,opacity:.6}}>Vista previa del encabezado de estimaciones</div>
       </div>
-
       <div className="grid-2">
         <div className="card">
           <p style={{fontWeight:600,fontSize:13,marginBottom:16,color:'#5a5a5a'}}>Información general</p>
-          <div className="form-group">
-            <label>Nombre de la empresa *</label>
-            <input disabled={!editMode} value={f.nombre} onChange={e=>s('nombre',e.target.value)} placeholder="Ej: Constructora del Norte SA"/>
-          </div>
-          <div className="form-group">
-            <label>Sector / Giro</label>
-            <input disabled={!editMode} value={f.sector} onChange={e=>s('sector',e.target.value)} placeholder="Ej: Construcción residencial"/>
-          </div>
-          <div className="form-group">
-            <label>Obra / Proyecto actual</label>
-            <input disabled={!editMode} value={f.obra} onChange={e=>s('obra',e.target.value)} placeholder="Ej: Residencial Las Palmas"/>
-          </div>
+          <div className="form-group"><label>Nombre de la empresa *</label><input disabled={!editMode} value={f.nombre} onChange={e=>s('nombre',e.target.value)} placeholder="Constructora del Norte SA"/></div>
+          <div className="form-group"><label>Sector / Giro</label><input disabled={!editMode} value={f.sector} onChange={e=>s('sector',e.target.value)} placeholder="Construcción residencial"/></div>
+          <div className="form-group"><label>Obra / Proyecto actual</label><input disabled={!editMode} value={f.obra} onChange={e=>s('obra',e.target.value)} placeholder="Residencial Las Palmas"/></div>
         </div>
         <div className="card">
           <p style={{fontWeight:600,fontSize:13,marginBottom:16,color:'#5a5a5a'}}>Contacto y logo</p>
+          <div className="form-group"><label>Teléfono</label><input disabled={!editMode} value={f.telefono} onChange={e=>s('telefono',e.target.value)} placeholder="33 1234 5678"/></div>
+          <div className="form-group"><label>Correo</label><input disabled={!editMode} value={f.correo} onChange={e=>s('correo',e.target.value)} placeholder="contacto@empresa.mx"/></div>
+          <div className="form-group"><label>Dirección</label><input disabled={!editMode} value={f.direccion} onChange={e=>s('direccion',e.target.value)} placeholder="Av. Vallarta 1234, Guadalajara"/></div>
           <div className="form-group">
-            <label>Teléfono</label>
-            <input disabled={!editMode} value={f.telefono} onChange={e=>s('telefono',e.target.value)} placeholder="Ej: 33 1234 5678"/>
-          </div>
-          <div className="form-group">
-            <label>Correo electrónico</label>
-            <input disabled={!editMode} value={f.correo} onChange={e=>s('correo',e.target.value)} placeholder="Ej: contacto@empresa.mx"/>
-          </div>
-          <div className="form-group">
-            <label>Dirección</label>
-            <input disabled={!editMode} value={f.direccion} onChange={e=>s('direccion',e.target.value)} placeholder="Ej: Av. Vallarta 1234, Guadalajara"/>
-          </div>
-          <div className="form-group">
-            <label>Logo de la empresa</label>
+            <label>Logo</label>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               {f.logo&&<img src={f.logo} alt="logo" style={{height:40,objectFit:'contain',borderRadius:6,border:'0.5px solid #e0deda',padding:4}}/>}
-              {editMode&&(
-                <>
-                  <button className="btn btn-sm" onClick={()=>fileRef.current.click()}><i className="ti ti-upload"/>{f.logo?'Cambiar logo':'Subir logo'}</button>
-                  {f.logo&&<button className="btn btn-sm btn-danger" onClick={()=>s('logo',null)}><i className="ti ti-x"/>Quitar</button>}
-                  <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleLogo}/>
-                </>
-              )}
-              {!editMode&&!f.logo&&<span style={{fontSize:12,color:'#999'}}>Sin logo — haz clic en Editar para agregar</span>}
+              {editMode&&(<>
+                <button className="btn btn-sm" onClick={()=>fileRef.current.click()}><i className="ti ti-upload"/>{f.logo?'Cambiar':'Subir logo'}</button>
+                {f.logo&&<button className="btn btn-sm btn-danger" onClick={()=>s('logo',null)}><i className="ti ti-x"/></button>}
+                <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleLogo}/>
+              </>)}
+              {!editMode&&!f.logo&&<span style={{fontSize:12,color:'#999'}}>Sin logo</span>}
             </div>
           </div>
         </div>
@@ -847,21 +919,103 @@ function VistaEmpresa({empresa,onSave}){
   );
 }
 
-// ─── Modales ─────────────────────────────────────────────────────────────────
-function ModalNuevaEst({onSave,onClose}){
+// ══════════════════════════════════════════════════════════════════════════════
+// SEGURIDAD — cambiar contraseñas
+// ══════════════════════════════════════════════════════════════════════════════
+function Seguridad({onChangeCreds}){
+  const [tab,setTab]=useState('admin');
+  const [f,setF]=useState({actual:'',nueva:'',confirmar:''});
+  const [show,setShow]=useState({actual:false,nueva:false,confirmar:false});
+  const [msg,setMsg]=useState(null); // {type:'ok'|'err', text}
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
+  const tog=(k)=>setShow(x=>({...x,[k]:!x[k]}));
+
+  function handleSave(){
+    if(!f.nueva||f.nueva.length<4){setMsg({type:'err',text:'La nueva contraseña debe tener al menos 4 caracteres.'});return;}
+    if(f.nueva!==f.confirmar){setMsg({type:'err',text:'Las contraseñas no coinciden.'});return;}
+    onChangeCreds(tab,f.nueva);
+    setMsg({type:'ok',text:`Contraseña de ${tab==='admin'?'Administrador':'Usuario'} actualizada correctamente.`});
+    setF({actual:'',nueva:'',confirmar:''});
+  }
+
+  function PwdInput({label,field}){
+    return(
+      <div className="form-group">
+        <label>{label}</label>
+        <div style={{position:'relative'}}>
+          <input type={show[field]?'text':'password'} value={f[field]} onChange={e=>s(field,e.target.value)} style={{paddingRight:36}}/>
+          <button onClick={()=>tog(field)} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'#999',padding:0,fontSize:16}}>
+            <i className={`ti ${show[field]?'ti-eye-off':'ti-eye'}`}/>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div className="content">
+      <div className="page-header"><h1>Seguridad — Contraseñas</h1></div>
+      <div style={{maxWidth:480}}>
+        <div className="card">
+          <div className="tabs">
+            <div className={`tab${tab==='admin'?' active':''}`} onClick={()=>{setTab('admin');setF({actual:'',nueva:'',confirmar:''});setMsg(null);}}>
+              <i className="ti ti-shield-check" style={{marginRight:6}}/>Administrador
+            </div>
+            <div className={`tab${tab==='user'?' active':''}`} onClick={()=>{setTab('user');setF({actual:'',nueva:'',confirmar:''});setMsg(null);}}>
+              <i className="ti ti-user" style={{marginRight:6}}/>Usuario
+            </div>
+          </div>
+          {msg&&(
+            <div style={{
+              background:msg.type==='ok'?'#f0fdf4':'#fef2f2',
+              border:`0.5px solid ${msg.type==='ok'?'#86efac':'#fca5a5'}`,
+              color:msg.type==='ok'?'#16a34a':'#dc2626',
+              borderRadius:8,padding:'8px 12px',fontSize:12,marginBottom:14,display:'flex',alignItems:'center',gap:6
+            }}>
+              <i className={`ti ${msg.type==='ok'?'ti-circle-check':'ti-alert-circle'}`}/>{msg.text}
+            </div>
+          )}
+          <PwdInput label="Nueva contraseña *" field="nueva"/>
+          <PwdInput label="Confirmar contraseña *" field="confirmar"/>
+          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12,color:'#5a5a5a'}}>
+            <i className="ti ti-info-circle" style={{marginRight:6,color:'#2563eb'}}/>
+            Cambia la contraseña del perfil <strong>{tab==='admin'?'Administrador':'Usuario'}</strong>. Mínimo 4 caracteres.
+          </div>
+          <button className="btn btn-primary" disabled={!f.nueva||!f.confirmar} onClick={handleSave}>
+            <i className="ti ti-lock"/>Actualizar contraseña
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODALES
+// ══════════════════════════════════════════════════════════════════════════════
+function ModalNuevaEst({estimaciones,onSave,onClose}){
+  const folio=genFolio(estimaciones);
   const [f,setF]=useState({nombre:'',obra:'',descripcion:''});
   const s=(k,v)=>setF(x=>({...x,[k]:v}));
   return(
     <div className="modal">
-      <div className="modal-header"><h3>Nueva estimación</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+      <div className="modal-header">
+        <h3>Nueva estimación</h3>
+        <button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button>
+      </div>
       <div className="modal-body">
+        <div style={{background:'#eff6ff',borderRadius:8,padding:'8px 14px',marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
+          <i className="ti ti-hash" style={{color:'#2563eb'}}/>
+          <span style={{fontSize:12,color:'#5a5a5a'}}>Folio asignado:</span>
+          <span className="folio">{folio}</span>
+        </div>
         <div className="form-group"><label>Nombre *</label><input placeholder="Ej: Estimación cimentación fase 1" value={f.nombre} onChange={e=>s('nombre',e.target.value)}/></div>
         <div className="form-group"><label>Obra / Proyecto</label><input placeholder="Ej: Residencial Las Palmas" value={f.obra} onChange={e=>s('obra',e.target.value)}/></div>
         <div className="form-group"><label>Descripción</label><textarea rows={3} value={f.descripcion} onChange={e=>s('descripcion',e.target.value)} style={{resize:'vertical'}}/></div>
       </div>
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" disabled={!f.nombre} onClick={()=>onSave(f)}>Crear</button>
+        <button className="btn btn-primary" disabled={!f.nombre} onClick={()=>onSave({...f,folio})}>Crear</button>
       </div>
     </div>
   );
@@ -886,12 +1040,17 @@ function ModalAddItem({estId,cat,hp,onSave,onClose}){
           </select>
         </div>
         {item&&(
-          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12,display:'flex',gap:16,flexWrap:'wrap'}}>
-            <span><span style={{color:'#999'}}>Cat.:</span> {item.Categoria}</span>
-            <span><span style={{color:'#999'}}>Und.:</span> {item.Unidad}</span>
-            <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
-            <span><span style={{color:'#999'}}>Precio catálogo:</span> <strong style={{color:'#16a34a'}}>${(+item.Precio||0).toFixed(2)}</strong></span>
-            {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: ${(+vigente.precio).toFixed(2)}</span>}
+          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12}}>
+            <div style={{display:'flex',gap:16,flexWrap:'wrap',marginBottom:6}}>
+              <span><span style={{color:'#999'}}>Categoría:</span> {item.Categoria}</span>
+              <span><span style={{color:'#999'}}>Unidad:</span> {item.Unidad}</span>
+              <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
+            </div>
+            <div style={{display:'flex',gap:16,flexWrap:'wrap',alignItems:'center'}}>
+              <span><span style={{color:'#999'}}>Proveedor:</span> <strong>{item.Proveedor}</strong></span>
+              <span><span style={{color:'#999'}}>Precio catálogo:</span> <strong style={{color:'#16a34a'}}>${(+item.Precio||0).toFixed(2)}</strong></span>
+              {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: ${(+vigente.precio).toFixed(2)}</span>}
+            </div>
           </div>
         )}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
@@ -940,7 +1099,6 @@ function ModalNuevoPrecio({cat,onSave,onClose}){
   );
 }
 
-// ─── Modal Nuevo Concepto (creado desde la app) ───────────────────────────────
 function ModalNuevoConcepto({onSave,onClose}){
   const [f,setF]=useState({Nombre:'',Categoria:'',Unidad:'',Precio:'',Proveedor:'',CC:''});
   const s=(k,v)=>setF(x=>({...x,[k]:v}));
@@ -949,7 +1107,7 @@ function ModalNuevoConcepto({onSave,onClose}){
     <div className="modal">
       <div className="modal-header"><h3>Nuevo concepto</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
       <div className="modal-body">
-        <div className="form-group"><label>Nombre del concepto *</label><input placeholder="Ej: Concreto premezclado f'c=250" value={f.Nombre} onChange={e=>s('Nombre',e.target.value)}/></div>
+        <div className="form-group"><label>Nombre *</label><input placeholder="Ej: Concreto premezclado f'c=250" value={f.Nombre} onChange={e=>s('Nombre',e.target.value)}/></div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <div className="form-group">
             <label>Categoría *</label>
@@ -958,25 +1116,13 @@ function ModalNuevoConcepto({onSave,onClose}){
               {cats.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div className="form-group">
-            <label>Unidad *</label>
-            <input placeholder="Ej: M3, Pieza, Metro..." value={f.Unidad} onChange={e=>s('Unidad',e.target.value)}/>
-          </div>
+          <div className="form-group"><label>Unidad *</label><input placeholder="M3, Pieza, Metro..." value={f.Unidad} onChange={e=>s('Unidad',e.target.value)}/></div>
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-          <div className="form-group">
-            <label>Precio unitario *</label>
-            <input type="number" step="any" placeholder="0.00" value={f.Precio} onChange={e=>s('Precio',e.target.value)}/>
-          </div>
-          <div className="form-group">
-            <label>Proveedor</label>
-            <input placeholder="Ej: Proveedor local" value={f.Proveedor} onChange={e=>s('Proveedor',e.target.value)}/>
-          </div>
+          <div className="form-group"><label>Precio unitario *</label><input type="number" step="any" placeholder="0.00" value={f.Precio} onChange={e=>s('Precio',e.target.value)}/></div>
+          <div className="form-group"><label>Proveedor</label><input placeholder="Proveedor local" value={f.Proveedor} onChange={e=>s('Proveedor',e.target.value)}/></div>
         </div>
-        <div className="form-group">
-          <label>Clave / Código (C.C)</label>
-          <input placeholder="Ej: MAT-099" value={f.CC} onChange={e=>s('CC',e.target.value)}/>
-        </div>
+        <div className="form-group"><label>Clave / C.C</label><input placeholder="MAT-099" value={f.CC} onChange={e=>s('CC',e.target.value)}/></div>
       </div>
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancelar</button>
