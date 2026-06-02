@@ -202,8 +202,8 @@
   <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; color:#64748b;" id="fechaLabel"></span>
 </div>
 
-<!-- FILTRO MATERIAL + RANGO -->
-<div style="background:#181c26; border-bottom:1px solid rgba(255,255,255,0.08); padding:0.6rem 2rem; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+
+<div id="filtroBar" style="display:none; background:#181c26; border-bottom:1px solid rgba(255,255,255,0.08); padding:0.6rem 2rem; align-items:center; gap:12px; flex-wrap:wrap;">
   <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#64748b; text-transform:uppercase; letter-spacing:0.08em;">Filtrar por:</span>
 
   <div style="display:flex; align-items:center; gap:6px;">
@@ -220,7 +220,7 @@
     <input type="date" id="rangoHasta" onchange="aplicarFiltros()" style="background:#1e2332; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#f1f5f9; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 8px;" />
   </div>
 
-  <button onclick="limpiarFiltros()" style="font-size:10px; font-family:'IBM Plex Mono',monospace; padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:#64748b; cursor:pointer;" id="btnLimpiar">✕ Limpiar</button>
+  <button onclick="limpiarFiltros()" style="font-size:10px; font-family:'IBM Plex Mono',monospace; padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:#64748b; cursor:pointer;">✕ Limpiar</button>
   <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:#f0a500;" id="filtroActivoLabel"></span>
 </div>
 
@@ -366,7 +366,10 @@ function setPeriodo(p, el) {
   el.classList.add('active');
   const picker = document.getElementById('datePickerRow');
   picker.style.display = p === 'fecha' ? 'flex' : 'none';
+  const filtroBar = document.getElementById('filtroBar');
+  filtroBar.style.display = p === 'todo' ? 'flex' : 'none';
   if (p !== 'fecha') {
+    if (p !== 'todo') limpiarFiltros();
     const filtrados = filtrarPorPeriodo(allRows);
     render(filtrados);
   }
