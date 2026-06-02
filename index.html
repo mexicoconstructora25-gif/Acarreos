@@ -265,6 +265,7 @@
             <th>Tiro / Destino</th>
             <th>Subtotal</th>
             <th>Status</th>
+            <th>Ticket</th>
           </tr>
         </thead>
         <tbody id="tablaBody">
@@ -455,6 +456,14 @@ function render(rows) {
   document.getElementById('tablaBody').innerHTML = recientes.length ? recientes.map(r => {
     const st = (r['status']||'').toLowerCase();
     const badgeCls = st.includes('complet') || st.includes('aprobad') ? 'badge-ok' : st.includes('cancel') || st.includes('rechaz') ? 'badge-err' : 'badge-warn';
+    const ticketRaw = r['ticket'] || '';
+    const FOLDER_ID = '1L7LAfnRn9nxM1ckwpRSGmuCmHNABBz_E';
+    let ticketCell = '—';
+    if (ticketRaw) {
+      const fileName = ticketRaw.split('/').pop();
+      const ticketUrl = `https://drive.google.com/drive/folders/${FOLDER_ID}?q=${encodeURIComponent(fileName)}`;
+      ticketCell = `<a href="${ticketUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:3px 9px;border-radius:4px;border:1px solid rgba(240,165,0,0.3);color:#f0a500;text-decoration:none;white-space:nowrap;" onmouseover="this.style.background='rgba(240,165,0,0.1)'" onmouseout="this.style.background='transparent'">📄 PDF</a>`;
+    }
     return `<tr>
       <td class="folio-val">${r['folio'] || '—'}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${r['fechaaca'] || '—'}</td>
@@ -464,6 +473,7 @@ function render(rows) {
       <td style="font-size:11px;color:var(--text3)">${r['DESCTIRO'] || r['TIRO'] || '—'}</td>
       <td style="font-family:var(--mono);font-size:11px">$${parseFloat((r['Subtotal']||'0').replace(/[$,]/g,'')).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
       <td><span class="badge ${badgeCls}">${r['status'] || 'Pendiente'}</span></td>
+      <td>${ticketCell}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="8" class="loading">Sin registros en este período</td></tr>';
 
