@@ -30,6 +30,7 @@ button{cursor:pointer}
 .btn-primary{background:#2563eb;color:#fff;border-color:#2563eb}
 .btn-primary:hover{background:#1d4ed8}
 .btn-danger{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+.btn-success{background:#f0fdf4;color:#16a34a;border-color:#86efac}
 .btn-sm{padding:4px 10px;font-size:12px}
 .card{background:#fff;border:0.5px solid #e0deda;border-radius:12px;padding:20px}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -46,12 +47,14 @@ tr:hover td{background:#f8f7f4}
 .badge-green{background:#f0fdf4;color:#16a34a}
 .badge-blue{background:#eff6ff;color:#2563eb}
 .badge-amber{background:#fffbeb;color:#b45309}
+.badge-purple{background:#faf5ff;color:#7c3aed}
 .form-group{margin-bottom:14px}
 .form-group label{display:block;font-size:12px;font-weight:500;color:#5a5a5a;margin-bottom:5px}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:7px 10px;border:0.5px solid #cccac4;border-radius:8px;background:#fff;color:#1a1a1a;outline:none}
-.form-group input:focus,.form-group select:focus{border-color:#2563eb}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#2563eb}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal{background:#fff;border-radius:12px;width:560px;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-wide{width:700px}
 .modal-header{padding:18px 20px;border-bottom:0.5px solid #e0deda;display:flex;align-items:center;justify-content:space-between}
 .modal-header h3{font-size:15px;font-weight:600}
 .modal-body{padding:20px}
@@ -69,12 +72,36 @@ tr:hover td{background:#f8f7f4}
 .est-list-item{padding:12px 16px;border-bottom:0.5px solid #e0deda;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
 .est-list-item:hover{background:#f8f7f4}
 .est-list-item.sel{background:#eff6ff;border-left-color:#2563eb}
+/* Pantalla de selección de perfil */
+.profile-screen{position:fixed;inset:0;background:#f0efe9;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200}
+.profile-card{background:#fff;border:0.5px solid #e0deda;border-radius:16px;padding:32px 40px;text-align:center;cursor:pointer;transition:all .2s;width:200px}
+.profile-card:hover{border-color:#2563eb;box-shadow:0 4px 20px rgba(37,99,235,.15);transform:translateY(-2px)}
+.profile-card i{font-size:40px;display:block;margin-bottom:12px}
+.profile-card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.profile-card p{font-size:12px;color:#999}
+/* Panel empresa */
+.empresa-preview{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);border-radius:12px;padding:24px;color:#fff;margin-bottom:20px}
+/* Catálogo con panel lateral */
+.cat-layout{display:grid;grid-template-columns:1fr 380px;gap:16px;height:calc(100vh - 130px)}
+.cat-panel{background:#fff;border:0.5px solid #e0deda;border-radius:12px;overflow:auto}
+/* Row seleccionada en catálogo */
+tr.cat-sel td{background:#eff6ff!important}
+/* Checkbox estilo */
+.chk-row{display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;border:0.5px solid #e0deda;margin-bottom:6px}
+.chk-row:hover{background:#f8f7f4}
+.chk-row.vigente{border-color:#86efac;background:#f0fdf4}
+.chk-box{width:18px;height:18px;border-radius:4px;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chk-box.on{background:#16a34a;border-color:#16a34a}
+/* Rol badge */
+.rol-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.rol-admin{background:#faf5ff;color:#7c3aed;border:0.5px solid #d8b4fe}
+.rol-user{background:#eff6ff;color:#2563eb;border:0.5px solid #bfdbfe}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect}=React;
+const {useState,useEffect,useRef}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
 function parseCSV(text){
@@ -104,7 +131,34 @@ const DEMO=[
   {id:'8',Nombre:'Cable THW-LS 10AWG',Categoria:'Eléctrico',Unidad:'Metro',Precio:'28.50',Proveedor:'CONDUMEX',CC:'ELE-008'},
 ];
 
+// ─── Pantalla de selección de perfil ───────────────────────────────────────
+function ProfileScreen({onSelect}){
+  return(
+    <div className="profile-screen">
+      <div style={{marginBottom:32,textAlign:'center'}}>
+        <div style={{fontSize:32,marginBottom:8}}>🏗️</div>
+        <h1 style={{fontSize:22,fontWeight:700,marginBottom:4}}>App de Estimaciones</h1>
+        <p style={{color:'#999',fontSize:13}}>Selecciona tu perfil para continuar</p>
+      </div>
+      <div style={{display:'flex',gap:20}}>
+        <div className="profile-card" onClick={()=>onSelect('admin')}>
+          <i className="ti ti-shield-check" style={{color:'#7c3aed'}}/>
+          <h3>Administrador</h3>
+          <p>Acceso completo</p>
+        </div>
+        <div className="profile-card" onClick={()=>onSelect('user')}>
+          <i className="ti ti-user" style={{color:'#2563eb'}}/>
+          <h3>Usuario</h3>
+          <p>Solo estimaciones</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App principal ──────────────────────────────────────────────────────────
 function App(){
+  const [perfil,setPerfil]=useState(null);
   const [view,setView]=useState('dashboard');
   const [catalogo,setCatalogo]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -112,15 +166,30 @@ function App(){
   const [modal,setModal]=useState(null);
   const [estimaciones,setEstimaciones]=useState([]);
   const [histPrecios,setHistPrecios]=useState([]);
+  const [empresa,setEmpresa]=useState({nombre:'Mi Empresa Constructora',sector:'Construcción',obra:'',logo:null,telefono:'',correo:'',direccion:''});
 
   useEffect(()=>{
     const saved=localStorage.getItem('estimaciones_v1');
-    if(saved){const d=JSON.parse(saved);setEstimaciones(d.est||[]);setHistPrecios(d.hp||[]);}
+    if(saved){
+      const d=JSON.parse(saved);
+      setEstimaciones(d.est||[]);
+      setHistPrecios(d.hp||[]);
+      if(d.empresa)setEmpresa(d.empresa);
+      if(d.catalogo_extra)setCatalogoExtra(d.catalogo_extra||[]);
+    }
     loadSheet();
   },[]);
 
-  function save(est,hp){
-    localStorage.setItem('estimaciones_v1',JSON.stringify({est:est||estimaciones,hp:hp||histPrecios}));
+  // Catálogo extra (creado desde la app)
+  const [catalogoExtra,setCatalogoExtra]=useState([]);
+
+  function save(est,hp,emp,ce){
+    localStorage.setItem('estimaciones_v1',JSON.stringify({
+      est:est!==undefined?est:estimaciones,
+      hp:hp!==undefined?hp:histPrecios,
+      empresa:emp!==undefined?emp:empresa,
+      catalogo_extra:ce!==undefined?ce:catalogoExtra,
+    }));
   }
 
   async function loadSheet(){
@@ -142,16 +211,16 @@ function App(){
 
   function saveEst(e){
     const next=e.id?estimaciones.map(x=>x.id===e.id?e:x):[...estimaciones,{...e,id:uid(),fecha:new Date().toLocaleDateString('es-MX'),items:[],total:0}];
-    setEstimaciones(next);save(next,null);closeModal();
+    setEstimaciones(next);save(next,undefined,undefined,undefined);closeModal();
   }
-  function delEst(id){const next=estimaciones.filter(e=>e.id!==id);setEstimaciones(next);save(next,null);}
+  function delEst(id){const next=estimaciones.filter(e=>e.id!==id);setEstimaciones(next);save(next,undefined,undefined,undefined);}
   function addItem(estId,item){
     const next=estimaciones.map(e=>{
       if(e.id!==estId)return e;
       const items=[...(e.items||[]),{...item,id:uid()}];
       return{...e,items,total:items.reduce((s,i)=>s+(+i.precio*+i.cantidad||0),0)};
     });
-    setEstimaciones(next);save(next,null);closeModal();
+    setEstimaciones(next);save(next,undefined,undefined,undefined);closeModal();
   }
   function removeItem(estId,itemId){
     const next=estimaciones.map(e=>{
@@ -159,67 +228,102 @@ function App(){
       const items=e.items.filter(i=>i.id!==itemId);
       return{...e,items,total:items.reduce((s,i)=>s+(+i.precio*+i.cantidad||0),0)};
     });
-    setEstimaciones(next);save(next,null);
+    setEstimaciones(next);save(next,undefined,undefined,undefined);
   }
   function savePrecio(p){
     let next=[...histPrecios];
     if(p.vigente)next=next.map(x=>x.material===p.material&&x.proveedor===p.proveedor?{...x,vigente:false}:x);
     next=[...next,{...p,id:uid(),fecha:new Date().toLocaleDateString('es-MX')}];
-    setHistPrecios(next);save(null,next);closeModal();
+    setHistPrecios(next);save(undefined,next,undefined,undefined);closeModal();
   }
   function toggleVigente(pid){
     const p=histPrecios.find(x=>x.id===pid);if(!p)return;
     const next=histPrecios.map(x=>x.material===p.material&&x.proveedor===p.proveedor?{...x,vigente:x.id===pid}:x);
-    setHistPrecios(next);save(null,next);
+    setHistPrecios(next);save(undefined,next,undefined,undefined);
+  }
+  function saveEmpresa(e){
+    setEmpresa(e);save(undefined,undefined,e,undefined);closeModal();
+  }
+  function saveNuevoConcepto(c){
+    const next=[...catalogoExtra,{...c,id:uid(),fuente:'local'}];
+    setCatalogoExtra(next);save(undefined,undefined,undefined,next);closeModal();
+  }
+  function delConcepto(id){
+    const next=catalogoExtra.filter(c=>c.id!==id);
+    setCatalogoExtra(next);save(undefined,undefined,undefined,next);
   }
 
+  const catTotal=[...catalogo,...catalogoExtra];
   const totalEstimado=estimaciones.reduce((s,e)=>s+(e.total||0),0);
+
+  // Navegación según perfil
+  const navAdmin=[
+    {id:'dashboard',icon:'ti-dashboard',label:'Dashboard'},
+    {id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'},
+    {id:'catalogo',icon:'ti-package',label:'Catálogo'},
+    {id:'precios',icon:'ti-tags',label:'Historial precios'},
+    {id:'reportes',icon:'ti-chart-bar',label:'Reportes'},
+    {id:'empresa',icon:'ti-building',label:'Empresa'},
+  ];
+  const navUser=[
+    {id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'},
+  ];
+  const nav=perfil==='admin'?navAdmin:navUser;
+
+  if(!perfil) return <ProfileScreen onSelect={p=>{setPerfil(p);setView(p==='user'?'estimaciones':'dashboard');}}/>;
 
   return(
     <div className="app">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <h2>🏗️ Estimaciones</h2>
-          <p>Gestión de obra</p>
+          {empresa.logo
+            ?<img src={empresa.logo} alt="logo" style={{height:32,marginBottom:6,objectFit:'contain'}}/>
+            :<h2>🏗️ {empresa.nombre}</h2>
+          }
+          <p style={{display:'flex',alignItems:'center',gap:6}}>
+            <span className={`rol-tag ${perfil==='admin'?'rol-admin':'rol-user'}`}>
+              <i className={`ti ${perfil==='admin'?'ti-shield-check':'ti-user'}`} style={{fontSize:10}}/>{perfil==='admin'?'Admin':'Usuario'}
+            </span>
+          </p>
         </div>
-        {[
-          {id:'dashboard',icon:'ti-dashboard',label:'Dashboard'},
-          {id:'estimaciones',icon:'ti-clipboard-list',label:'Estimaciones'},
-          {id:'catalogo',icon:'ti-package',label:'Catálogo'},
-          {id:'precios',icon:'ti-tags',label:'Historial precios'},
-          {id:'reportes',icon:'ti-chart-bar',label:'Reportes'},
-        ].map(n=>(
+        {nav.map(n=>(
           <div key={n.id} className={`nav-item${view===n.id?' active':''}`} onClick={()=>setView(n.id)}>
             <i className={`ti ${n.icon}`}/>{n.label}
           </div>
         ))}
         <div style={{flex:1}}/>
-        <div className="nav-item" onClick={loadSheet}><i className="ti ti-refresh"/>Sincronizar Sheet</div>
+        {perfil==='admin'&&<div className="nav-item" onClick={loadSheet}><i className="ti ti-refresh"/>Sincronizar Sheet</div>}
+        <div className="nav-item" style={{color:'#dc2626'}} onClick={()=>{setPerfil(null);setView('dashboard');}}>
+          <i className="ti ti-logout"/>Cambiar perfil
+        </div>
       </aside>
       <div className="main">
         {syncMsg&&<div className="sync-bar"><i className="ti ti-cloud"/>{syncMsg}</div>}
         {loading
           ?<div style={{display:'flex',alignItems:'center',justifyContent:'center',flex:1,color:'#999',gap:8}}><i className="ti ti-loader" style={{fontSize:20}}/>Cargando...</div>
           :<>
-            {view==='dashboard'&&<Dashboard est={estimaciones} cat={catalogo} hp={histPrecios} fmt={fmt} fmtN={fmtN} total={totalEstimado} setView={setView} openModal={openModal}/>}
-            {view==='estimaciones'&&<Estimaciones est={estimaciones} cat={catalogo} hp={histPrecios} fmt={fmt} fmtN={fmtN} openModal={openModal} delEst={delEst} removeItem={removeItem}/>}
-            {view==='catalogo'&&<Catalogo cat={catalogo} fmt={fmt}/>}
-            {view==='precios'&&<HistPrecios hp={histPrecios} cat={catalogo} est={estimaciones} fmt={fmt} fmtN={fmtN} openModal={openModal} toggleVigente={toggleVigente}/>}
-            {view==='reportes'&&<Reportes est={estimaciones} fmt={fmt} fmtN={fmtN}/>}
+            {view==='dashboard'&&<Dashboard est={estimaciones} cat={catTotal} hp={histPrecios} fmt={fmt} fmtN={fmtN} total={totalEstimado} setView={setView} openModal={openModal}/>}
+            {view==='estimaciones'&&<Estimaciones est={estimaciones} cat={catTotal} hp={histPrecios} fmt={fmt} fmtN={fmtN} openModal={openModal} delEst={delEst} removeItem={removeItem} perfil={perfil}/>}
+            {view==='catalogo'&&perfil==='admin'&&<Catalogo cat={catTotal} catalogoExtra={catalogoExtra} fmt={fmt} hp={histPrecios} savePrecio={savePrecio} toggleVigente={toggleVigente} openModal={openModal} delConcepto={delConcepto}/>}
+            {view==='precios'&&perfil==='admin'&&<HistPrecios hp={histPrecios} cat={catTotal} est={estimaciones} fmt={fmt} fmtN={fmtN} openModal={openModal} toggleVigente={toggleVigente}/>}
+            {view==='reportes'&&perfil==='admin'&&<Reportes est={estimaciones} fmt={fmt} fmtN={fmtN}/>}
+            {view==='empresa'&&perfil==='admin'&&<VistaEmpresa empresa={empresa} onSave={saveEmpresa}/>}
           </>
         }
       </div>
       {modal&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&closeModal()}>
           {modal.t==='nueva-est'&&<ModalNuevaEst onSave={saveEst} onClose={closeModal}/>}
-          {modal.t==='add-item'&&<ModalAddItem estId={modal.d} cat={catalogo} hp={histPrecios} onSave={addItem} onClose={closeModal}/>}
-          {modal.t==='nuevo-precio'&&<ModalNuevoPrecio cat={catalogo} onSave={savePrecio} onClose={closeModal}/>}
+          {modal.t==='add-item'&&<ModalAddItem estId={modal.d} cat={catTotal} hp={histPrecios} onSave={addItem} onClose={closeModal}/>}
+          {modal.t==='nuevo-precio'&&<ModalNuevoPrecio cat={catTotal} onSave={savePrecio} onClose={closeModal}/>}
+          {modal.t==='nuevo-concepto'&&<ModalNuevoConcepto onSave={saveNuevoConcepto} onClose={closeModal}/>}
         </div>
       )}
     </div>
   );
 }
 
+// ─── Dashboard ──────────────────────────────────────────────────────────────
 function Dashboard({est,cat,hp,fmt,fmtN,total,setView,openModal}){
   const provMap={};
   est.forEach(e=>(e.items||[]).forEach(i=>{
@@ -275,10 +379,12 @@ function Dashboard({est,cat,hp,fmt,fmtN,total,setView,openModal}){
   );
 }
 
-function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem}){
+// ─── Estimaciones ────────────────────────────────────────────────────────────
+function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
   const [sel,setSel]=useState(null);
   const [tab,setTab]=useState('items');
   const s=est.find(e=>e.id===sel);
+  const isAdmin=perfil==='admin';
 
   const byProv={};const byMat={};
   (s?.items||[]).forEach(i=>{
@@ -317,7 +423,7 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem}){
                 {sel===e.id&&(
                   <div style={{display:'flex',gap:6,marginTop:10}} onClick={ev=>ev.stopPropagation()}>
                     <button className="btn btn-sm btn-primary" onClick={()=>openModal('add-item',e.id)}><i className="ti ti-plus"/>Agregar ítem</button>
-                    <button className="btn btn-sm btn-danger" onClick={()=>{if(confirm('¿Eliminar estimación?')){delEst(e.id);setSel(null);}}}><i className="ti ti-trash"/></button>
+                    {isAdmin&&<button className="btn btn-sm btn-danger" onClick={()=>{if(confirm('¿Eliminar estimación?')){delEst(e.id);setSel(null);}}}><i className="ti ti-trash"/></button>}
                   </div>
                 )}
               </div>
@@ -344,7 +450,7 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem}){
                   (s.items||[]).length===0
                     ?<div className="empty-state"><i className="ti ti-package-off"/><p>Sin ítems — agrega uno</p></div>
                     :<table>
-                      <thead><tr><th>Material</th><th>Proveedor</th><th>Und.</th><th>Precio</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead>
+                      <thead><tr><th>Material</th><th>Proveedor</th><th>Und.</th><th>Precio</th><th>Cant.</th><th>Subtotal</th>{isAdmin&&<th></th>}</tr></thead>
                       <tbody>{s.items.map(it=>(
                         <tr key={it.id}>
                           <td style={{fontWeight:500}}>{it.material}</td>
@@ -353,7 +459,7 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem}){
                           <td>{fmt(+it.precio)}</td>
                           <td>{fmtN(+it.cantidad)}</td>
                           <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+it.precio*+it.cantidad)}</td>
-                          <td><button className="btn btn-sm btn-danger" onClick={()=>removeItem(s.id,it.id)}><i className="ti ti-trash"/></button></td>
+                          {isAdmin&&<td><button className="btn btn-sm btn-danger" onClick={()=>removeItem(s.id,it.id)}><i className="ti ti-trash"/></button></td>}
                         </tr>
                       ))}</tbody>
                     </table>
@@ -387,52 +493,132 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem}){
   );
 }
 
-function Catalogo({cat,fmt}){
+// ─── Catálogo con panel de precios inline ────────────────────────────────────
+function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,delConcepto}){
   const [q,setQ]=useState('');
+  const [selId,setSelId]=useState(null);
+  const [showAddPrecio,setShowAddPrecio]=useState(false);
+  const [npForm,setNpForm]=useState({precio:'',notas:'',vigente:true});
+
   const f=cat.filter(c=>!q||[c.Nombre,c.Proveedor,c.Categoria].some(x=>x?.toLowerCase().includes(q.toLowerCase())));
+  const selItem=cat.find(c=>c.id===selId);
+  const preciosItem=selItem?hp.filter(p=>p.material===selItem.Nombre&&p.proveedor===selItem.Proveedor):[];
+  const esLocal=selItem&&catalogoExtra.some(c=>c.id===selItem.id);
+
+  function handleAddPrecio(){
+    if(!npForm.precio||!selItem)return;
+    savePrecio({material:selItem.Nombre,proveedor:selItem.Proveedor,precio:npForm.precio,notas:npForm.notas,vigente:npForm.vigente});
+    setNpForm({precio:'',notas:'',vigente:true});setShowAddPrecio(false);
+  }
+
   return(
-    <div className="content">
+    <div className="content" style={{paddingBottom:0}}>
       <div className="page-header">
         <h1>Catálogo de productos</h1>
-        <span className="badge badge-blue">{cat.length} productos desde Google Sheets</span>
+        <div style={{display:'flex',gap:8}}>
+          <span className="badge badge-blue">{cat.length} productos</span>
+          <button className="btn btn-primary" onClick={()=>openModal('nuevo-concepto')}><i className="ti ti-plus"/>Nuevo concepto</button>
+        </div>
       </div>
       <div className="search-bar"><i className="ti ti-search" style={{color:'#999'}}/><input placeholder="Buscar nombre, proveedor, categoría..." value={q} onChange={e=>setQ(e.target.value)}/></div>
-      <div className="card" style={{padding:0}}>
-        <table>
-          <thead><tr><th>ID</th><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Precio</th><th>Proveedor</th><th>C.C</th></tr></thead>
-          <tbody>
-            {f.length===0
-              ?<tr><td colSpan={7} style={{textAlign:'center',padding:32,color:'#999'}}>Sin resultados</td></tr>
-              :f.map((c,i)=>(
-                <tr key={i}>
-                  <td style={{color:'#999',fontSize:11}}>{c.id||i+1}</td>
-                  <td style={{fontWeight:500}}>{c.Nombre}</td>
-                  <td><span className="chip">{c.Categoria}</span></td>
-                  <td>{c.Unidad}</td>
-                  <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+c.Precio||0)}</td>
-                  <td>{c.Proveedor}</td>
-                  <td style={{fontSize:12,color:'#999'}}>{c.CC}</td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </table>
+      <div className="cat-layout">
+        {/* Tabla izquierda */}
+        <div className="cat-panel" style={{padding:0}}>
+          <table>
+            <thead><tr><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Precio</th><th>Proveedor</th><th></th></tr></thead>
+            <tbody>
+              {f.length===0
+                ?<tr><td colSpan={6} style={{textAlign:'center',padding:32,color:'#999'}}>Sin resultados</td></tr>
+                :f.map((c,i)=>{
+                  const local=catalogoExtra.some(x=>x.id===c.id);
+                  return(
+                    <tr key={i} className={selId===c.id?'cat-sel':''} style={{cursor:'pointer'}} onClick={()=>{setSelId(c.id);setShowAddPrecio(false);}}>
+                      <td style={{fontWeight:500}}>
+                        {c.Nombre}
+                        {local&&<span className="badge badge-amber" style={{marginLeft:6,fontSize:10}}>Local</span>}
+                      </td>
+                      <td><span className="chip">{c.Categoria}</span></td>
+                      <td>{c.Unidad}</td>
+                      <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+c.Precio||0)}</td>
+                      <td>{c.Proveedor}</td>
+                      <td>{local&&<button className="btn btn-sm btn-danger" onClick={ev=>{ev.stopPropagation();if(confirm('¿Eliminar?'))delConcepto(c.id);}}><i className="ti ti-trash"/></button>}</td>
+                    </tr>
+                  );
+                })
+              }
+            </tbody>
+          </table>
+        </div>
+        {/* Panel derecho de precios */}
+        <div className="cat-panel" style={{padding:16}}>
+          {!selItem
+            ?<div className="empty-state"><i className="ti ti-hand-click"/><p>Selecciona un producto para ver y gestionar sus precios</p></div>
+            :<>
+              <div style={{marginBottom:16}}>
+                <p style={{fontWeight:600,fontSize:14}}>{selItem.Nombre}</p>
+                <p style={{fontSize:12,color:'#999',marginTop:2}}>{selItem.Proveedor} · {selItem.Categoria} · {selItem.Unidad}</p>
+                <p style={{fontSize:13,color:'#16a34a',fontWeight:600,marginTop:4}}>Precio catálogo: {fmt(+selItem.Precio||0)}</p>
+              </div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+                <p style={{fontWeight:600,fontSize:13,color:'#5a5a5a'}}>Historial de precios ({preciosItem.length})</p>
+                <button className="btn btn-sm btn-primary" onClick={()=>setShowAddPrecio(v=>!v)}>
+                  <i className={`ti ${showAddPrecio?'ti-x':'ti-plus'}`}/>{showAddPrecio?'Cancelar':'Agregar precio'}
+                </button>
+              </div>
+              {showAddPrecio&&(
+                <div style={{background:'#f8f7f4',borderRadius:8,padding:14,marginBottom:12,border:'0.5px solid #e0deda'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                    <div className="form-group" style={{marginBottom:0}}>
+                      <label>Precio unitario *</label>
+                      <input type="number" step="any" value={npForm.precio} onChange={e=>setNpForm(f=>({...f,precio:e.target.value}))} placeholder="0.00"/>
+                    </div>
+                    <div className="form-group" style={{marginBottom:0}}>
+                      <label>Notas</label>
+                      <input value={npForm.notas} onChange={e=>setNpForm(f=>({...f,notas:e.target.value}))} placeholder="Ej: Cotización 30 días"/>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onClick={()=>setNpForm(f=>({...f,vigente:!f.vigente}))}>
+                      <div className={`chk-box${npForm.vigente?' on':''}`}>{npForm.vigente&&<i className="ti ti-check" style={{color:'#fff',fontSize:11}}/>}</div>
+                      <span style={{fontSize:12}}>Marcar como vigente</span>
+                    </div>
+                    <button className="btn btn-sm btn-success" disabled={!npForm.precio} onClick={handleAddPrecio}><i className="ti ti-check"/>Guardar</button>
+                  </div>
+                </div>
+              )}
+              {preciosItem.length===0
+                ?<div style={{textAlign:'center',padding:24,color:'#999',fontSize:13}}>Sin precios registrados para este producto</div>
+                :preciosItem.sort((a,b)=>b.fecha>a.fecha?1:-1).map(p=>(
+                  <div key={p.id} className={`chk-row${p.vigente?' vigente':''}`} onClick={()=>toggleVigente(p.id)}>
+                    <div className={`chk-box${p.vigente?' on':''}`}>{p.vigente&&<i className="ti ti-check" style={{color:'#fff',fontSize:11}}/>}</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{fontWeight:600,color:'#16a34a'}}>{fmt(+p.precio)}</span>
+                        {p.vigente&&<span className="badge badge-green" style={{fontSize:10}}>Vigente</span>}
+                      </div>
+                      <div style={{fontSize:11,color:'#999',marginTop:2}}>{p.fecha}{p.notas&&` · ${p.notas}`}</div>
+                    </div>
+                  </div>
+                ))
+              }
+            </>
+          }
+        </div>
       </div>
     </div>
   );
 }
 
+// ─── Historial de precios ────────────────────────────────────────────────────
 function HistPrecios({hp,cat,est,fmt,fmtN,openModal,toggleVigente}){
   const [q,setQ]=useState('');
   const f=hp.filter(p=>!q||[p.material,p.proveedor].some(x=>x?.toLowerCase().includes(q.toLowerCase())));
-
   const acum={};
   est.forEach(e=>(e.items||[]).forEach(i=>{
     const k=`${i.material}||${i.proveedor}||${i.precio}`;
     if(!acum[k])acum[k]={qty:0,monto:0};
     acum[k].qty+=(+i.cantidad||0);acum[k].monto+=(+i.precio*+i.cantidad||0);
   }));
-
   return(
     <div className="content">
       <div className="page-header">
@@ -477,6 +663,7 @@ function HistPrecios({hp,cat,est,fmt,fmtN,openModal,toggleVigente}){
   );
 }
 
+// ─── Reportes ────────────────────────────────────────────────────────────────
 function Reportes({est,fmt,fmtN}){
   const byProv={};const byCat={};
   est.forEach(e=>(e.items||[]).forEach(i=>{
@@ -487,7 +674,6 @@ function Reportes({est,fmt,fmtN}){
     byCat[c].qty+=(+i.cantidad||0);byCat[c].monto+=(+i.precio*+i.cantidad||0);
   }));
   const totMonto=Object.values(byProv).reduce((s,v)=>s+v.monto,0);
-
   return(
     <div className="content">
       <div className="page-header"><h1>Reportes acumulados</h1></div>
@@ -554,6 +740,114 @@ function Reportes({est,fmt,fmtN}){
   );
 }
 
+// ─── Vista Empresa ────────────────────────────────────────────────────────────
+function VistaEmpresa({empresa,onSave}){
+  const [f,setF]=useState({...empresa});
+  const [editMode,setEditMode]=useState(false);
+  const fileRef=useRef();
+
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
+
+  function handleLogo(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>s('logo',ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function handleSave(){
+    onSave(f);
+    setEditMode(false);
+  }
+
+  return(
+    <div className="content">
+      <div className="page-header">
+        <h1>Datos de la empresa</h1>
+        {!editMode
+          ?<button className="btn btn-primary" onClick={()=>setEditMode(true)}><i className="ti ti-pencil"/>Editar</button>
+          :<div style={{display:'flex',gap:8}}>
+            <button className="btn" onClick={()=>{setF({...empresa});setEditMode(false);}}>Cancelar</button>
+            <button className="btn btn-primary" onClick={handleSave}><i className="ti ti-check"/>Guardar cambios</button>
+          </div>
+        }
+      </div>
+
+      {/* Preview encabezado de estimación */}
+      <div className="empresa-preview" style={{marginBottom:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:12}}>
+          {f.logo
+            ?<img src={f.logo} alt="logo" style={{height:56,width:56,objectFit:'contain',background:'rgba(255,255,255,.15)',borderRadius:8,padding:4}}/>
+            :<div style={{width:56,height:56,background:'rgba(255,255,255,.15)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>🏗️</div>
+          }
+          <div>
+            <div style={{fontSize:20,fontWeight:700}}>{f.nombre||'Nombre de la empresa'}</div>
+            <div style={{fontSize:13,opacity:.8}}>{f.sector||'Sector'}</div>
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,fontSize:12,opacity:.85}}>
+          {f.telefono&&<span><i className="ti ti-phone" style={{marginRight:4}}/>{f.telefono}</span>}
+          {f.correo&&<span><i className="ti ti-mail" style={{marginRight:4}}/>{f.correo}</span>}
+          {f.direccion&&<span><i className="ti ti-map-pin" style={{marginRight:4}}/>{f.direccion}</span>}
+          {f.obra&&<span><i className="ti ti-building-skyscraper" style={{marginRight:4}}/>Obra: {f.obra}</span>}
+        </div>
+        <div style={{marginTop:12,paddingTop:10,borderTop:'0.5px solid rgba(255,255,255,.3)',fontSize:11,opacity:.6}}>
+          Vista previa del encabezado de estimaciones
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <p style={{fontWeight:600,fontSize:13,marginBottom:16,color:'#5a5a5a'}}>Información general</p>
+          <div className="form-group">
+            <label>Nombre de la empresa *</label>
+            <input disabled={!editMode} value={f.nombre} onChange={e=>s('nombre',e.target.value)} placeholder="Ej: Constructora del Norte SA"/>
+          </div>
+          <div className="form-group">
+            <label>Sector / Giro</label>
+            <input disabled={!editMode} value={f.sector} onChange={e=>s('sector',e.target.value)} placeholder="Ej: Construcción residencial"/>
+          </div>
+          <div className="form-group">
+            <label>Obra / Proyecto actual</label>
+            <input disabled={!editMode} value={f.obra} onChange={e=>s('obra',e.target.value)} placeholder="Ej: Residencial Las Palmas"/>
+          </div>
+        </div>
+        <div className="card">
+          <p style={{fontWeight:600,fontSize:13,marginBottom:16,color:'#5a5a5a'}}>Contacto y logo</p>
+          <div className="form-group">
+            <label>Teléfono</label>
+            <input disabled={!editMode} value={f.telefono} onChange={e=>s('telefono',e.target.value)} placeholder="Ej: 33 1234 5678"/>
+          </div>
+          <div className="form-group">
+            <label>Correo electrónico</label>
+            <input disabled={!editMode} value={f.correo} onChange={e=>s('correo',e.target.value)} placeholder="Ej: contacto@empresa.mx"/>
+          </div>
+          <div className="form-group">
+            <label>Dirección</label>
+            <input disabled={!editMode} value={f.direccion} onChange={e=>s('direccion',e.target.value)} placeholder="Ej: Av. Vallarta 1234, Guadalajara"/>
+          </div>
+          <div className="form-group">
+            <label>Logo de la empresa</label>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              {f.logo&&<img src={f.logo} alt="logo" style={{height:40,objectFit:'contain',borderRadius:6,border:'0.5px solid #e0deda',padding:4}}/>}
+              {editMode&&(
+                <>
+                  <button className="btn btn-sm" onClick={()=>fileRef.current.click()}><i className="ti ti-upload"/>{f.logo?'Cambiar logo':'Subir logo'}</button>
+                  {f.logo&&<button className="btn btn-sm btn-danger" onClick={()=>s('logo',null)}><i className="ti ti-x"/>Quitar</button>}
+                  <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleLogo}/>
+                </>
+              )}
+              {!editMode&&!f.logo&&<span style={{fontSize:12,color:'#999'}}>Sin logo — haz clic en Editar para agregar</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Modales ─────────────────────────────────────────────────────────────────
 function ModalNuevaEst({onSave,onClose}){
   const [f,setF]=useState({nombre:'',obra:'',descripcion:''});
   const s=(k,v)=>setF(x=>({...x,[k]:v}));
@@ -580,7 +874,6 @@ function ModalAddItem({estId,cat,hp,onSave,onClose}){
   const item=cat.find(c=>c.id===selId);
   const vigente=item?hp.find(p=>p.material===item.Nombre&&p.proveedor===item.Proveedor&&p.vigente):null;
   const precioBase=precioOv||(vigente?.precio)||(item?.Precio)||'';
-
   return(
     <div className="modal">
       <div className="modal-header"><h3>Agregar ítem</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
@@ -642,6 +935,52 @@ function ModalNuevoPrecio({cat,onSave,onClose}){
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancelar</button>
         <button className="btn btn-primary" disabled={!f.material||!f.proveedor||!f.precio} onClick={()=>onSave(f)}>Guardar</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal Nuevo Concepto (creado desde la app) ───────────────────────────────
+function ModalNuevoConcepto({onSave,onClose}){
+  const [f,setF]=useState({Nombre:'',Categoria:'',Unidad:'',Precio:'',Proveedor:'',CC:''});
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
+  const cats=['Materiales','Acero','Mampostería','Pétreos','Instalaciones','Eléctrico','Mano de Obra','Herramienta','Otro'];
+  return(
+    <div className="modal">
+      <div className="modal-header"><h3>Nuevo concepto</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+      <div className="modal-body">
+        <div className="form-group"><label>Nombre del concepto *</label><input placeholder="Ej: Concreto premezclado f'c=250" value={f.Nombre} onChange={e=>s('Nombre',e.target.value)}/></div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+          <div className="form-group">
+            <label>Categoría *</label>
+            <select value={f.Categoria} onChange={e=>s('Categoria',e.target.value)}>
+              <option value="">— Selecciona —</option>
+              {cats.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Unidad *</label>
+            <input placeholder="Ej: M3, Pieza, Metro..." value={f.Unidad} onChange={e=>s('Unidad',e.target.value)}/>
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+          <div className="form-group">
+            <label>Precio unitario *</label>
+            <input type="number" step="any" placeholder="0.00" value={f.Precio} onChange={e=>s('Precio',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label>Proveedor</label>
+            <input placeholder="Ej: Proveedor local" value={f.Proveedor} onChange={e=>s('Proveedor',e.target.value)}/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Clave / Código (C.C)</label>
+          <input placeholder="Ej: MAT-099" value={f.CC} onChange={e=>s('CC',e.target.value)}/>
+        </div>
+      </div>
+      <div className="modal-footer">
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={!f.Nombre||!f.Categoria||!f.Unidad||!f.Precio} onClick={()=>onSave(f)}>Agregar al catálogo</button>
       </div>
     </div>
   );
