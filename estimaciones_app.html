@@ -111,6 +111,14 @@ tr.cat-sel td{background:#eff6ff!important}
 const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
+// ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT (Extensiones → Apps Script → Implementar)
+const APPS_SCRIPT_URL='PEGA_TU_URL_AQUI';
+const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='PEGA_TU_URL_AQUI';
+async function apiPost(body){
+  const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+
 // ── Contraseñas por defecto (hash simple: btoa) ──────────────────────────────
 const DEFAULT_CREDS={admin:'admin123',user:'user123'};
 
@@ -128,8 +136,8 @@ function parseCSV(text){
   }).filter(r=>Object.values(r).some(v=>v));
 }
 
-const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
-const fmtN=n=>new Intl.NumberFormat('es-MX').format(n||0);
+const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2}).format(parseFloat(n)||0);
+const fmtN=n=>new Intl.NumberFormat('es-MX').format(parseFloat(n)||0);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
 
 // Genera folio consecutivo EST-001, EST-002 …
@@ -316,17 +324,31 @@ function App(){
     setHistPrecios(next);saveAll({hp:next});
   }
   function saveEmpresa(e){setEmpresa(e);saveAll({empresa:e});closeModal();}
-  function saveNuevoConcepto(c){
-    const next=[...catalogoExtra,{...c,id:uid(),fuente:'local'}];
+  async function saveNuevoConcepto(c){
+    const newItem={...c,id:uid(),fuente:'local'};
+    const next=[...catalogoExtra,newItem];
     setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
+    if(hasScript()){
+      try{await apiPost({action:'addRow',sheet:'Catalogo',row:newItem,headers:['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC']});}
+      catch(e){console.warn('No se pudo sincronizar al Sheet:',e);}
+    }
   }
-  function updateConcepto(id,field,value){
+  async function updateConcepto(id,field,value){
     const next=catalogoExtra.map(c=>c.id===id?{...c,[field]:value}:c);
     setCatalogoExtra(next);saveAll({catalogo_extra:next});
+    if(hasScript()){
+      const item=next.find(c=>c.id===id);
+      if(item)try{await apiPost({action:'updateRow',sheet:'Catalogo',id,row:item,headers:['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC']});}
+      catch(e){console.warn('No se pudo actualizar en Sheet:',e);}
+    }
   }
-  function delConcepto(id){
+  async function delConcepto(id){
     const next=catalogoExtra.filter(c=>c.id!==id);
     setCatalogoExtra(next);saveAll({catalogo_extra:next});
+    if(hasScript()){
+      try{await apiPost({action:'deleteRow',sheet:'Catalogo',id});}
+      catch(e){console.warn('No se pudo eliminar del Sheet:',e);}
+    }
   }
   function changeCreds(role,newPwd){
     const next={...creds,[role]:hashPwd(newPwd)};
@@ -378,7 +400,6 @@ function App(){
       </aside>
       <div className="main">
         {syncMsg&&<div className="sync-bar"><i className="ti ti-cloud"/>{syncMsg}</div>}
-
         {loading
           ?<div style={{display:'flex',alignItems:'center',justifyContent:'center',flex:1,color:'#999',gap:8}}><i className="ti ti-loader" style={{fontSize:20}}/>Cargando...</div>
           :<>
@@ -996,157 +1017,75 @@ function Seguridad({onChangeCreds}){
 // ══════════════════════════════════════════════════════════════════════════════
 function ModalNuevaEst({estimaciones,onSave,onClose}){
   const folio=genFolio(estimaciones);
-  const [f,setF]=useState({nombre:'',obra:'',descripcion:''});
-  const s=(k,v)=>setF(x=>({...x,[k]:v}));
   return(
-    <div className="modal">
+    <div className="modal" style={{width:380}}>
       <div className="modal-header">
         <h3>Nueva estimación</h3>
         <button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button>
       </div>
       <div className="modal-body">
-        <div style={{background:'#eff6ff',borderRadius:8,padding:'8px 14px',marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
-          <i className="ti ti-hash" style={{color:'#2563eb'}}/>
-          <span style={{fontSize:12,color:'#5a5a5a'}}>Folio asignado:</span>
-          <span className="folio">{folio}</span>
+        <div style={{textAlign:'center',padding:'16px 0 20px'}}>
+          <p style={{fontSize:12,color:'#999',marginBottom:10}}>Se generará el siguiente folio:</p>
+          <span className="folio" style={{fontSize:22,padding:'8px 24px'}}>{folio}</span>
         </div>
-        <div className="form-group"><label>Nombre *</label><input placeholder="Ej: Estimación cimentación fase 1" value={f.nombre} onChange={e=>s('nombre',e.target.value)}/></div>
-        <div className="form-group"><label>Obra / Proyecto</label><input placeholder="Ej: Residencial Las Palmas" value={f.obra} onChange={e=>s('obra',e.target.value)}/></div>
-        <div className="form-group"><label>Descripción</label><textarea rows={3} value={f.descripcion} onChange={e=>s('descripcion',e.target.value)} style={{resize:'vertical'}}/></div>
+        <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#5a5a5a'}}>
+          <i className="ti ti-info-circle" style={{marginRight:6,color:'#2563eb'}}/>
+          El folio se genera automáticamente de forma consecutiva. Podrás agregar ítems una vez creada.
+        </div>
       </div>
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" disabled={!f.nombre} onClick={()=>onSave({...f,folio})}>Crear</button>
+        <button className="btn btn-primary" onClick={()=>onSave({folio})}><i className="ti ti-check"/>Crear estimación</button>
       </div>
     </div>
   );
 }
 
 function ModalAddItem({estId,cat,hp,onSave,onClose}){
-  const [busqueda,setBusqueda]=useState('');
-  const [filtroProv,setFiltroProv]=useState('');
   const [selId,setSelId]=useState('');
   const [cant,setCant]=useState('');
   const [precioOv,setPrecioOv]=useState('');
-
-  const proveedores=[...new Set(cat.map(c=>c.Proveedor).filter(Boolean))].sort();
-
-  const catFiltrada=cat.filter(c=>{
-    const matchBusq=!busqueda||c.Nombre?.toLowerCase().includes(busqueda.toLowerCase())||c.CC?.toLowerCase().includes(busqueda.toLowerCase());
-    const matchProv=!filtroProv||c.Proveedor===filtroProv;
-    return matchBusq&&matchProv;
-  });
-
   const item=cat.find(c=>c.id===selId);
   const vigente=item?hp.find(p=>p.material===item.Nombre&&p.proveedor===item.Proveedor&&p.vigente):null;
   const precioBase=precioOv||(vigente?.precio)||(item?.Precio)||'';
-
-  function selectItem(c){
-    setSelId(c.id);setPrecioOv('');
-  }
-
   return(
-    <div className="modal" style={{width:640}}>
-      <div className="modal-header"><h3>Agregar ítem a estimación</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+    <div className="modal">
+      <div className="modal-header"><h3>Agregar ítem</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
       <div className="modal-body">
-
-        {/* ── Buscador + filtro proveedor ── */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:8,marginBottom:10}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,background:'#f8f7f4',border:'0.5px solid #cccac4',borderRadius:8,padding:'6px 12px'}}>
-            <i className="ti ti-search" style={{color:'#999',fontSize:16,flexShrink:0}}/>
-            <input
-              value={busqueda}
-              onChange={e=>{setBusqueda(e.target.value);setSelId('');}}
-              placeholder="Buscar producto por nombre o clave..."
-              style={{border:'none',background:'transparent',flex:1,outline:'none',fontSize:13}}
-              autoFocus
-            />
-            {busqueda&&<button onClick={()=>{setBusqueda('');}} style={{background:'none',border:'none',color:'#999',padding:0,cursor:'pointer',fontSize:14}}><i className="ti ti-x"/></button>}
-          </div>
-          <select
-            value={filtroProv}
-            onChange={e=>{setFiltroProv(e.target.value);setSelId('');}}
-            style={{padding:'6px 10px',border:'0.5px solid #cccac4',borderRadius:8,background:'#fff',color:filtroProv?'#1a1a1a':'#999',minWidth:160,outline:'none'}}
-          >
-            <option value="">Todos los proveedores</option>
-            {proveedores.map(p=><option key={p} value={p}>{p}</option>)}
+        <div className="form-group">
+          <label>Producto *</label>
+          <select value={selId} onChange={e=>setSelId(e.target.value)}>
+            <option value="">— Selecciona un producto —</option>
+            {cat.map((c,i)=><option key={i} value={c.id}>{c.Nombre} · {c.Proveedor}</option>)}
           </select>
         </div>
-
-        {/* ── Lista de productos filtrada ── */}
-        <div style={{border:'0.5px solid #e0deda',borderRadius:8,maxHeight:220,overflowY:'auto',marginBottom:12}}>
-          {catFiltrada.length===0
-            ?<div style={{textAlign:'center',padding:24,color:'#999',fontSize:13}}><i className="ti ti-search-off" style={{display:'block',fontSize:24,marginBottom:6}}/>Sin resultados</div>
-            :catFiltrada.map(c=>{
-              const vig=hp.find(p=>p.material===c.Nombre&&p.proveedor===c.Proveedor&&p.vigente);
-              return(
-                <div
-                  key={c.id}
-                  onClick={()=>selectItem(c)}
-                  style={{
-                    display:'flex',alignItems:'center',justifyContent:'space-between',
-                    padding:'9px 14px',cursor:'pointer',borderBottom:'0.5px solid #f0efe9',
-                    background:selId===c.id?'#eff6ff':'transparent',
-                    borderLeft:selId===c.id?'3px solid #2563eb':'3px solid transparent',
-                    transition:'all .1s'
-                  }}
-                >
-                  <div>
-                    <span style={{fontWeight:selId===c.id?600:500,fontSize:13}}>{c.Nombre}</span>
-                    <span style={{fontSize:11,color:'#999',marginLeft:8}}>{c.CC}</span>
-                    <div style={{fontSize:11,color:'#5a5a5a',marginTop:2}}>{c.Proveedor} · {c.Categoria} · {c.Unidad}</div>
-                  </div>
-                  <div style={{textAlign:'right',flexShrink:0,marginLeft:12}}>
-                    {vig
-                      ?<span className="badge badge-green" style={{fontSize:11}}><i className="ti ti-check"/>${(+vig.precio).toFixed(2)}</span>
-                      :<span style={{fontWeight:600,color:'#16a34a',fontSize:13}}>${(+c.Precio||0).toFixed(2)}</span>
-                    }
-                  </div>
-                </div>
-              );
-            })
-          }
-        </div>
-
-        {/* ── Detalle del producto seleccionado ── */}
         {item&&(
-          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12,display:'flex',gap:16,flexWrap:'wrap',alignItems:'center',border:'0.5px solid #e0deda'}}>
-            <span><span style={{color:'#999'}}>Proveedor:</span> <strong>{item.Proveedor}</strong></span>
-            <span><span style={{color:'#999'}}>Unidad:</span> {item.Unidad}</span>
-            <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
-            <span><span style={{color:'#999'}}>Precio base:</span> <strong style={{color:'#16a34a'}}>${(+item.Precio||0).toFixed(2)}</strong></span>
-            {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: ${(+vigente.precio).toFixed(2)}</span>}
+          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12}}>
+            <div style={{display:'flex',gap:16,flexWrap:'wrap',marginBottom:6}}>
+              <span><span style={{color:'#999'}}>Categoría:</span> {item.Categoria}</span>
+              <span><span style={{color:'#999'}}>Unidad:</span> {item.Unidad}</span>
+              <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
+            </div>
+            <div style={{display:'flex',gap:16,flexWrap:'wrap',alignItems:'center'}}>
+              <span><span style={{color:'#999'}}>Proveedor:</span> <strong>{item.Proveedor}</strong></span>
+              <span><span style={{color:'#999'}}>Precio catálogo:</span> <strong style={{color:'#16a34a'}}>${(+item.Precio||0).toFixed(2)}</strong></span>
+              {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: ${(+vigente.precio).toFixed(2)}</span>}
+            </div>
           </div>
         )}
-
-        {/* ── Cantidad y precio ── */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-          <div className="form-group">
-            <label>Cantidad *</label>
-            <input type="number" min="0" step="any" value={cant} onChange={e=>setCant(e.target.value)} placeholder="0" disabled={!item}/>
-          </div>
-          <div className="form-group">
-            <label>Precio unitario {vigente?'(vigente aplicado)':item?'(catálogo)':''}</label>
-            <input type="number" step="any" value={precioOv} onChange={e=>setPrecioOv(e.target.value)} placeholder={precioBase||'0.00'} disabled={!item}/>
-          </div>
+          <div className="form-group"><label>Cantidad *</label><input type="number" min="0" step="any" value={cant} onChange={e=>setCant(e.target.value)} placeholder="0"/></div>
+          <div className="form-group"><label>Precio unitario</label><input type="number" step="any" value={precioOv} onChange={e=>setPrecioOv(e.target.value)} placeholder={precioBase||'0.00'}/></div>
         </div>
-
         {item&&cant&&(
-          <div style={{background:'#f0fdf4',borderRadius:8,padding:'10px 14px',border:'0.5px solid #86efac'}}>
-            <strong style={{color:'#16a34a'}}>
-              Subtotal: {new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format((+precioBase||0)*(+cant||0))}
-            </strong>
-            <span style={{fontSize:12,color:'#16a34a',marginLeft:8}}>({cant} {item.Unidad} × ${(+precioBase||0).toFixed(2)})</span>
+          <div style={{background:'#f0fdf4',borderRadius:8,padding:'10px 14px',border:'0.5px solid #bbf7d0'}}>
+            <strong style={{color:'#16a34a'}}>Subtotal: {new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format((+precioBase||0)*(+cant||0))}</strong>
           </div>
         )}
       </div>
       <div className="modal-footer">
-        <span style={{fontSize:12,color:'#999',marginRight:'auto'}}>{catFiltrada.length} productos encontrados</span>
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" disabled={!item||!cant}
-          onClick={()=>onSave(estId,{material:item.Nombre,proveedor:item.Proveedor,unidad:item.Unidad,precio:precioBase,cantidad:cant,categoria:item.Categoria,cc:item.CC})}>
-          <i className="ti ti-plus"/>Agregar ítem
-        </button>
+        <button className="btn btn-primary" disabled={!item||!cant} onClick={()=>onSave(estId,{material:item.Nombre,proveedor:item.Proveedor,unidad:item.Unidad,precio:precioBase,cantidad:cant,categoria:item.Categoria,cc:item.CC})}>Agregar</button>
       </div>
     </div>
   );
