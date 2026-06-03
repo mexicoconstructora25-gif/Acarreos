@@ -109,7 +109,7 @@ tr.cat-sel td{background:#eff6ff!important}
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
-const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pubhtml";
+const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
 // ⚠️ Pega aquí la URL de tu Apps Script desplegado
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzDoPLDeX6DLIwkuW0qHMwUeqEdzmLvx1udedB1puQZZr5GLYC9gyw106rc5BgJNK_0/exec';
@@ -279,7 +279,17 @@ function App(){
       if(!r.ok)throw new Error();
       const t=await r.text();
       const d=parseCSV(t);
-      if(d.length>0){setCatalogo(d);setSyncMsg(`✓ ${d.length} productos cargados desde Google Sheets`);}
+      if(d.length>0){
+        setCatalogo(d);
+        // Limpiar del catalogoExtra los que ya están en el Sheet (evita duplicados)
+        const ids=new Set(d.map(x=>x.id||x.Nombre));
+        setCatalogoExtra(prev=>{
+          const cleaned=prev.filter(x=>!ids.has(x.id)&&!ids.has(x.Nombre));
+          saveAll({catalogo_extra:cleaned});
+          return cleaned;
+        });
+        setSyncMsg(`✓ ${d.length} productos cargados desde Google Sheets`);
+      }
       else{setCatalogo(DEMO);setSyncMsg('Sheet vacío — usando datos demo');}
     }catch{setCatalogo(DEMO);setSyncMsg('Sin conexión al Sheet — usando datos demo');}
     setLoading(false);
@@ -360,7 +370,10 @@ function App(){
     setCreds(next);saveAll({creds:next});
   }
 
-  const catTotal=[...catalogo,...catalogoExtra];
+  // Deduplicar: el Sheet tiene prioridad; catalogoExtra solo agrega items que no existen en el Sheet
+  const sheetIds=new Set(catalogo.map(c=>c.id||c.Nombre));
+  const extraFiltrado=catalogoExtra.filter(c=>!sheetIds.has(c.id)&&!sheetIds.has(c.Nombre));
+  const catTotal=[...catalogo,...extraFiltrado];
   const totalEstimado=estimaciones.reduce((s,e)=>s+(e.total||0),0);
 
   const navAdmin=[
@@ -399,6 +412,7 @@ function App(){
         ))}
         <div style={{flex:1}}/>
         {perfil==='admin'&&<div className="nav-item" onClick={loadSheet}><i className="ti ti-refresh"/>Sincronizar Sheet</div>}
+        {perfil==='admin'&&<div className="nav-item" style={{color:'#ef4444',fontSize:12}} onClick={()=>{if(confirm('¿Limpiar todos los datos locales? Esto elimina el catálogo local y recarga desde el Sheet.')){localStorage.removeItem('estimaciones_v1');setCatalogoExtra([]);loadSheet();}}}><i className="ti ti-trash"/>Limpiar local</div>}
         <div className="nav-item" style={{color:'#dc2626'}} onClick={()=>{setPerfil(null);setView('dashboard');}}>
           <i className="ti ti-logout"/>Salir
         </div>
