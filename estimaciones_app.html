@@ -112,8 +112,8 @@ const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
 // ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT (Extensiones → Apps Script → Implementar)
-const APPS_SCRIPT_URL='PEGA_TU_URL_AQUI';
-const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='PEGA_TU_URL_AQUI';
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwic-YY1scPw2tQ9BZkiFwMUMfPJ5-eVHv_hhD0F6J-yZ6m536DmyMTQhIi_24_tP5Z/exec';
+const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbwic-YY1scPw2tQ9BZkiFwMUMfPJ5-eVHv_hhD0F6J-yZ6m536DmyMTQhIi_24_tP5Z/exec';
 async function apiPost(body){
   const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   return r.json();
