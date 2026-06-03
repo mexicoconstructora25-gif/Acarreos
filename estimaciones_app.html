@@ -111,9 +111,10 @@ tr.cat-sel td{background:#eff6ff!important}
 const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
-// ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT (Extensiones → Apps Script → Implementar)
+// ⚠️ Pega aquí la URL de tu Apps Script desplegado
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwic-YY1scPw2tQ9BZkiFwMUMfPJ5-eVHv_hhD0F6J-yZ6m536DmyMTQhIi_24_tP5Z/exec';
 const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbwic-YY1scPw2tQ9BZkiFwMUMfPJ5-eVHv_hhD0F6J-yZ6m536DmyMTQhIi_24_tP5Z/exec';
+const CAT_HEADERS=['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC'];
 async function apiPost(body){
   const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   return r.json();
@@ -136,8 +137,8 @@ function parseCSV(text){
   }).filter(r=>Object.values(r).some(v=>v));
 }
 
-const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2}).format(parseFloat(n)||0);
-const fmtN=n=>new Intl.NumberFormat('es-MX').format(parseFloat(n)||0);
+const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
+const fmtN=n=>new Intl.NumberFormat('es-MX').format(n||0);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
 
 // Genera folio consecutivo EST-001, EST-002 …
@@ -324,30 +325,34 @@ function App(){
     setHistPrecios(next);saveAll({hp:next});
   }
   function saveEmpresa(e){setEmpresa(e);saveAll({empresa:e});closeModal();}
+
   async function saveNuevoConcepto(c){
     const newItem={...c,id:uid(),fuente:'local'};
     const next=[...catalogoExtra,newItem];
     setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
     if(hasScript()){
-      try{await apiPost({action:'addRow',sheet:'Catalogo',row:newItem,headers:['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC']});}
-      catch(e){console.warn('No se pudo sincronizar al Sheet:',e);}
+      try{await apiPost({action:'addRow',sheet:'Catalogo',row:newItem,headers:CAT_HEADERS});}
+      catch(e){console.warn('Sheet sync error:',e);}
     }
   }
-  async function updateConcepto(id,field,value){
-    const next=catalogoExtra.map(c=>c.id===id?{...c,[field]:value}:c);
-    setCatalogoExtra(next);saveAll({catalogo_extra:next});
+
+  async function updateConcepto(id,datos){
+    // datos puede ser objeto completo {Nombre,Categoria,...} o {field,value} legado
+    const next=catalogoExtra.map(c=>c.id===id?{...c,...datos}:c);
+    setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
     if(hasScript()){
       const item=next.find(c=>c.id===id);
-      if(item)try{await apiPost({action:'updateRow',sheet:'Catalogo',id,row:item,headers:['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC']});}
-      catch(e){console.warn('No se pudo actualizar en Sheet:',e);}
+      if(item)try{await apiPost({action:'updateRow',sheet:'Catalogo',id,row:item,headers:CAT_HEADERS});}
+      catch(e){console.warn('Sheet sync error:',e);}
     }
   }
+
   async function delConcepto(id){
     const next=catalogoExtra.filter(c=>c.id!==id);
     setCatalogoExtra(next);saveAll({catalogo_extra:next});
     if(hasScript()){
       try{await apiPost({action:'deleteRow',sheet:'Catalogo',id});}
-      catch(e){console.warn('No se pudo eliminar del Sheet:',e);}
+      catch(e){console.warn('Sheet sync error:',e);}
     }
   }
   function changeCreds(role,newPwd){
@@ -400,6 +405,7 @@ function App(){
       </aside>
       <div className="main">
         {syncMsg&&<div className="sync-bar"><i className="ti ti-cloud"/>{syncMsg}</div>}
+
         {loading
           ?<div style={{display:'flex',alignItems:'center',justifyContent:'center',flex:1,color:'#999',gap:8}}><i className="ti ti-loader" style={{fontSize:20}}/>Cargando...</div>
           :<>
@@ -418,7 +424,8 @@ function App(){
           {modal.t==='nueva-est'&&<ModalNuevaEst estimaciones={estimaciones} onSave={saveEst} onClose={closeModal}/>}
           {modal.t==='add-item'&&<ModalAddItem estId={modal.d} cat={catTotal} hp={histPrecios} onSave={addItem} onClose={closeModal}/>}
           {modal.t==='nuevo-precio'&&<ModalNuevoPrecio cat={catTotal} onSave={savePrecio} onClose={closeModal}/>}
-          {modal.t==='nuevo-concepto'&&<ModalNuevoConcepto onSave={saveNuevoConcepto} onClose={closeModal}/>}
+          {modal.t==='nuevo-concepto'&&<ModalConcepto item={null} onSave={saveNuevoConcepto} onClose={closeModal}/>}
+          {modal.t==='edit-concepto'&&<ModalConcepto item={modal.d} onSave={datos=>updateConcepto(modal.d.id,datos)} onClose={closeModal}/>}
         </div>
       )}
     </div>
@@ -632,11 +639,10 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
         <h1>Catálogo de productos</h1>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <span className="badge badge-blue">{cat.length} productos</span>
-          {catalogoExtra.length>0&&(
-            <button className="btn btn-sm btn-warning" onClick={()=>exportCSV(catalogoExtra)}>
-              <i className="ti ti-table-export"/>Exportar locales CSV
-            </button>
-          )}
+          {hasScript()
+            ?<span className="badge badge-green"><i className="ti ti-cloud"/>Sheet conectado</span>
+            :<span className="badge badge-amber"><i className="ti ti-cloud-off"/>Solo local</span>
+          }
           <button className="btn btn-primary" onClick={()=>openModal('nuevo-concepto')}><i className="ti ti-plus"/>Nuevo concepto</button>
         </div>
       </div>
@@ -644,41 +650,33 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
       <div className="cat-layout">
         <div className="cat-panel" style={{padding:0}}>
           <table>
-            <thead><tr><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Precio</th><th>Proveedor</th><th></th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Precio</th><th>Proveedor</th><th>C.C</th><th style={{width:90}}>Acciones</th></tr></thead>
             <tbody>
               {f.length===0
-                ?<tr><td colSpan={6} style={{textAlign:'center',padding:32,color:'#999'}}>Sin resultados</td></tr>
+                ?<tr><td colSpan={7} style={{textAlign:'center',padding:32,color:'#999'}}>Sin resultados</td></tr>
                 :f.map((c,i)=>{
                   const local=catalogoExtra.some(x=>x.id===c.id);
                   return(
                     <tr key={i} className={selId===c.id?'cat-sel':''} style={{cursor:'pointer'}} onClick={()=>{setSelId(c.id);setShowAddPrecio(false);}}>
                       <td style={{fontWeight:500}}>
-                        {local
-                          ?<input className="inline-edit" defaultValue={c.Nombre} onBlur={e=>updateConcepto(c.id,'Nombre',e.target.value)} onClick={ev=>ev.stopPropagation()}/>
-                          :c.Nombre
-                        }
+                        {c.Nombre}
                         {local&&<span className="badge badge-amber" style={{marginLeft:6,fontSize:10}}>Local</span>}
                       </td>
                       <td><span className="chip">{c.Categoria}</span></td>
+                      <td>{c.Unidad}</td>
+                      <td style={{fontWeight:600,color:'#16a34a'}}>{fmt(+c.Precio||0)}</td>
+                      <td>{c.Proveedor}</td>
+                      <td style={{fontSize:12,color:'#999'}}>{c.CC}</td>
                       <td>
-                        {local
-                          ?<input className="inline-edit" defaultValue={c.Unidad} onBlur={e=>updateConcepto(c.id,'Unidad',e.target.value)} onClick={ev=>ev.stopPropagation()} style={{width:60}}/>
-                          :c.Unidad
-                        }
+                        <div style={{display:'flex',gap:4}} onClick={ev=>ev.stopPropagation()}>
+                          <button className="btn btn-sm" title="Editar" onClick={()=>openModal('edit-concepto',c)}>
+                            <i className="ti ti-edit"/>
+                          </button>
+                          {local&&<button className="btn btn-sm btn-danger" title="Eliminar" onClick={()=>{if(confirm(`¿Eliminar "${c.Nombre}"?`))delConcepto(c.id);}}>
+                            <i className="ti ti-trash"/>
+                          </button>}
+                        </div>
                       </td>
-                      <td style={{fontWeight:600,color:'#16a34a'}}>
-                        {local
-                          ?<input className="inline-edit" type="number" defaultValue={c.Precio} onBlur={e=>updateConcepto(c.id,'Precio',e.target.value)} onClick={ev=>ev.stopPropagation()} style={{width:80}}/>
-                          :fmt(+c.Precio||0)
-                        }
-                      </td>
-                      <td>
-                        {local
-                          ?<input className="inline-edit" defaultValue={c.Proveedor} onBlur={e=>updateConcepto(c.id,'Proveedor',e.target.value)} onClick={ev=>ev.stopPropagation()}/>
-                          :c.Proveedor
-                        }
-                      </td>
-                      <td>{local&&<button className="btn btn-sm btn-danger" onClick={ev=>{ev.stopPropagation();if(confirm('¿Eliminar?'))delConcepto(c.id);}}><i className="ti ti-trash"/></button>}</td>
                     </tr>
                   );
                 })
@@ -686,7 +684,7 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
             </tbody>
           </table>
         </div>
-        {/* Panel derecho */}
+        {/* Panel derecho: precios */}
         <div className="cat-panel" style={{padding:16}}>
           {!selItem
             ?<div className="empty-state"><i className="ti ti-hand-click"/><p>Selecciona un producto para gestionar sus precios</p></div>
@@ -1017,75 +1015,160 @@ function Seguridad({onChangeCreds}){
 // ══════════════════════════════════════════════════════════════════════════════
 function ModalNuevaEst({estimaciones,onSave,onClose}){
   const folio=genFolio(estimaciones);
+  const [f,setF]=useState({nombre:'',obra:'',descripcion:''});
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
   return(
-    <div className="modal" style={{width:380}}>
+    <div className="modal">
       <div className="modal-header">
         <h3>Nueva estimación</h3>
         <button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button>
       </div>
       <div className="modal-body">
-        <div style={{textAlign:'center',padding:'16px 0 20px'}}>
-          <p style={{fontSize:12,color:'#999',marginBottom:10}}>Se generará el siguiente folio:</p>
-          <span className="folio" style={{fontSize:22,padding:'8px 24px'}}>{folio}</span>
+        <div style={{background:'#eff6ff',borderRadius:8,padding:'8px 14px',marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
+          <i className="ti ti-hash" style={{color:'#2563eb'}}/>
+          <span style={{fontSize:12,color:'#5a5a5a'}}>Folio asignado:</span>
+          <span className="folio">{folio}</span>
         </div>
-        <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#5a5a5a'}}>
-          <i className="ti ti-info-circle" style={{marginRight:6,color:'#2563eb'}}/>
-          El folio se genera automáticamente de forma consecutiva. Podrás agregar ítems una vez creada.
-        </div>
+        <div className="form-group"><label>Nombre *</label><input placeholder="Ej: Estimación cimentación fase 1" value={f.nombre} onChange={e=>s('nombre',e.target.value)}/></div>
+        <div className="form-group"><label>Obra / Proyecto</label><input placeholder="Ej: Residencial Las Palmas" value={f.obra} onChange={e=>s('obra',e.target.value)}/></div>
+        <div className="form-group"><label>Descripción</label><textarea rows={3} value={f.descripcion} onChange={e=>s('descripcion',e.target.value)} style={{resize:'vertical'}}/></div>
       </div>
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={()=>onSave({folio})}><i className="ti ti-check"/>Crear estimación</button>
+        <button className="btn btn-primary" disabled={!f.nombre} onClick={()=>onSave({...f,folio})}>Crear</button>
       </div>
     </div>
   );
 }
 
 function ModalAddItem({estId,cat,hp,onSave,onClose}){
+  const [busqueda,setBusqueda]=useState('');
+  const [filtroProv,setFiltroProv]=useState('');
+  const [filtroCat,setFiltroCat]=useState('');
   const [selId,setSelId]=useState('');
   const [cant,setCant]=useState('');
   const [precioOv,setPrecioOv]=useState('');
+
+  const proveedores=[...new Set(cat.map(c=>c.Proveedor).filter(Boolean))].sort();
+  const categorias=[...new Set(cat.map(c=>c.Categoria).filter(Boolean))].sort();
+
+  const catFiltrada=cat.filter(c=>{
+    const matchBusq=!busqueda||c.Nombre?.toLowerCase().includes(busqueda.toLowerCase())||c.CC?.toLowerCase().includes(busqueda.toLowerCase());
+    const matchProv=!filtroProv||c.Proveedor===filtroProv;
+    const matchCat=!filtroCat||c.Categoria===filtroCat;
+    return matchBusq&&matchProv&&matchCat;
+  });
+
   const item=cat.find(c=>c.id===selId);
   const vigente=item?hp.find(p=>p.material===item.Nombre&&p.proveedor===item.Proveedor&&p.vigente):null;
   const precioBase=precioOv||(vigente?.precio)||(item?.Precio)||'';
+
+  function selectItem(c){setSelId(c.id);setPrecioOv('');}
+
   return(
-    <div className="modal">
-      <div className="modal-header"><h3>Agregar ítem</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+    <div className="modal" style={{width:660}}>
+      <div className="modal-header"><h3>Agregar ítem a estimación</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
       <div className="modal-body">
-        <div className="form-group">
-          <label>Producto *</label>
-          <select value={selId} onChange={e=>setSelId(e.target.value)}>
-            <option value="">— Selecciona un producto —</option>
-            {cat.map((c,i)=><option key={i} value={c.id}>{c.Nombre} · {c.Proveedor}</option>)}
+
+        {/* ── Buscador ── */}
+        <div style={{display:'flex',alignItems:'center',gap:8,background:'#f8f7f4',border:'0.5px solid #cccac4',borderRadius:8,padding:'6px 12px',marginBottom:8}}>
+          <i className="ti ti-search" style={{color:'#999',fontSize:16,flexShrink:0}}/>
+          <input
+            value={busqueda}
+            onChange={e=>{setBusqueda(e.target.value);setSelId('');}}
+            placeholder="Buscar producto por nombre o clave C.C..."
+            style={{border:'none',background:'transparent',flex:1,outline:'none',fontSize:13}}
+            autoFocus
+          />
+          {busqueda&&<button onClick={()=>setBusqueda('')} style={{background:'none',border:'none',color:'#999',padding:0,cursor:'pointer',fontSize:14}}><i className="ti ti-x"/></button>}
+        </div>
+
+        {/* ── Filtros categoría + proveedor ── */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+          <select value={filtroCat} onChange={e=>{setFiltroCat(e.target.value);setSelId('');}}
+            style={{padding:'6px 10px',border:'0.5px solid #cccac4',borderRadius:8,background:'#fff',color:filtroCat?'#1a1a1a':'#999',outline:'none'}}>
+            <option value="">Todas las categorías</option>
+            {categorias.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filtroProv} onChange={e=>{setFiltroProv(e.target.value);setSelId('');}}
+            style={{padding:'6px 10px',border:'0.5px solid #cccac4',borderRadius:8,background:'#fff',color:filtroProv?'#1a1a1a':'#999',outline:'none'}}>
+            <option value="">Todos los proveedores</option>
+            {proveedores.map(p=><option key={p} value={p}>{p}</option>)}
           </select>
         </div>
+
+        {/* ── Lista de productos filtrada ── */}
+        <div style={{border:'0.5px solid #e0deda',borderRadius:8,maxHeight:210,overflowY:'auto',marginBottom:12}}>
+          {catFiltrada.length===0
+            ?<div style={{textAlign:'center',padding:24,color:'#999',fontSize:13}}><i className="ti ti-search-off" style={{display:'block',fontSize:24,marginBottom:6}}/>Sin resultados</div>
+            :catFiltrada.map(c=>{
+              const vig=hp.find(p=>p.material===c.Nombre&&p.proveedor===c.Proveedor&&p.vigente);
+              return(
+                <div key={c.id} onClick={()=>selectItem(c)} style={{
+                  display:'flex',alignItems:'center',justifyContent:'space-between',
+                  padding:'9px 14px',cursor:'pointer',borderBottom:'0.5px solid #f0efe9',
+                  background:selId===c.id?'#eff6ff':'transparent',
+                  borderLeft:selId===c.id?'3px solid #2563eb':'3px solid transparent',transition:'all .1s'
+                }}>
+                  <div>
+                    <span style={{fontWeight:selId===c.id?600:500,fontSize:13}}>{c.Nombre}</span>
+                    <span style={{fontSize:11,color:'#999',marginLeft:8}}>{c.CC}</span>
+                    <div style={{fontSize:11,color:'#5a5a5a',marginTop:2}}>
+                      <span className="chip" style={{fontSize:10,marginRight:4}}>{c.Categoria}</span>
+                      {c.Proveedor} · {c.Unidad}
+                    </div>
+                  </div>
+                  <div style={{textAlign:'right',flexShrink:0,marginLeft:12}}>
+                    {vig
+                      ?<span className="badge badge-green" style={{fontSize:11}}><i className="ti ti-check"/>{fmt(+vig.precio)}</span>
+                      :<span style={{fontWeight:600,color:'#16a34a',fontSize:13}}>{fmt(+c.Precio||0)}</span>
+                    }
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
+
+        {/* ── Detalle seleccionado ── */}
         {item&&(
-          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12}}>
-            <div style={{display:'flex',gap:16,flexWrap:'wrap',marginBottom:6}}>
-              <span><span style={{color:'#999'}}>Categoría:</span> {item.Categoria}</span>
-              <span><span style={{color:'#999'}}>Unidad:</span> {item.Unidad}</span>
-              <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
-            </div>
-            <div style={{display:'flex',gap:16,flexWrap:'wrap',alignItems:'center'}}>
-              <span><span style={{color:'#999'}}>Proveedor:</span> <strong>{item.Proveedor}</strong></span>
-              <span><span style={{color:'#999'}}>Precio catálogo:</span> <strong style={{color:'#16a34a'}}>${(+item.Precio||0).toFixed(2)}</strong></span>
-              {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: ${(+vigente.precio).toFixed(2)}</span>}
-            </div>
+          <div style={{background:'#f8f7f4',borderRadius:8,padding:'10px 14px',marginBottom:14,fontSize:12,display:'flex',gap:16,flexWrap:'wrap',alignItems:'center',border:'0.5px solid #e0deda'}}>
+            <span><span style={{color:'#999'}}>Proveedor:</span> <strong>{item.Proveedor}</strong></span>
+            <span><span style={{color:'#999'}}>Unidad:</span> {item.Unidad}</span>
+            <span><span style={{color:'#999'}}>C.C:</span> {item.CC}</span>
+            <span><span style={{color:'#999'}}>Precio base:</span> <strong style={{color:'#16a34a'}}>{fmt(+item.Precio||0)}</strong></span>
+            {vigente&&<span className="badge badge-green"><i className="ti ti-check"/>Vigente: {fmt(+vigente.precio)}</span>}
           </div>
         )}
+
+        {/* ── Cantidad y precio ── */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-          <div className="form-group"><label>Cantidad *</label><input type="number" min="0" step="any" value={cant} onChange={e=>setCant(e.target.value)} placeholder="0"/></div>
-          <div className="form-group"><label>Precio unitario</label><input type="number" step="any" value={precioOv} onChange={e=>setPrecioOv(e.target.value)} placeholder={precioBase||'0.00'}/></div>
+          <div className="form-group">
+            <label>Cantidad *</label>
+            <input type="number" min="0" step="any" value={cant} onChange={e=>setCant(e.target.value)} placeholder="0" disabled={!item}/>
+          </div>
+          <div className="form-group">
+            <label>Precio unitario {vigente?'(vigente aplicado)':item?'(catálogo)':''}</label>
+            <input type="number" step="any" value={precioOv} onChange={e=>setPrecioOv(e.target.value)} placeholder={precioBase||'0.00'} disabled={!item}/>
+          </div>
         </div>
+
         {item&&cant&&(
-          <div style={{background:'#f0fdf4',borderRadius:8,padding:'10px 14px',border:'0.5px solid #bbf7d0'}}>
-            <strong style={{color:'#16a34a'}}>Subtotal: {new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format((+precioBase||0)*(+cant||0))}</strong>
+          <div style={{background:'#f0fdf4',borderRadius:8,padding:'10px 14px',border:'0.5px solid #86efac'}}>
+            <strong style={{color:'#16a34a'}}>
+              Subtotal: {new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2}).format((+precioBase||0)*(+cant||0))}
+            </strong>
+            <span style={{fontSize:12,color:'#16a34a',marginLeft:8}}>({cant} {item.Unidad} × {fmt(+precioBase||0)})</span>
           </div>
         )}
       </div>
       <div className="modal-footer">
+        <span style={{fontSize:12,color:'#999',marginRight:'auto'}}>{catFiltrada.length} productos encontrados</span>
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" disabled={!item||!cant} onClick={()=>onSave(estId,{material:item.Nombre,proveedor:item.Proveedor,unidad:item.Unidad,precio:precioBase,cantidad:cant,categoria:item.Categoria,cc:item.CC})}>Agregar</button>
+        <button className="btn btn-primary" disabled={!item||!cant}
+          onClick={()=>onSave(estId,{material:item.Nombre,proveedor:item.Proveedor,unidad:item.Unidad,precio:precioBase,cantidad:cant,categoria:item.Categoria,cc:item.CC})}>
+          <i className="ti ti-plus"/>Agregar ítem
+        </button>
       </div>
     </div>
   );
@@ -1119,13 +1202,20 @@ function ModalNuevoPrecio({cat,onSave,onClose}){
   );
 }
 
-function ModalNuevoConcepto({onSave,onClose}){
-  const [f,setF]=useState({Nombre:'',Categoria:'',Unidad:'',Precio:'',Proveedor:'',CC:''});
-  const s=(k,v)=>setF(x=>({...x,[k]:v}));
+function ModalConcepto({item,onSave,onClose}){
+  const isEdit=!!item;
   const cats=['Materiales','Acero','Mampostería','Pétreos','Instalaciones','Eléctrico','Mano de Obra','Herramienta','Otro'];
+  const [f,setF]=useState(isEdit
+    ?{Nombre:item.Nombre||'',Categoria:item.Categoria||'',Unidad:item.Unidad||'',Precio:item.Precio||'',Proveedor:item.Proveedor||'',CC:item.CC||''}
+    :{Nombre:'',Categoria:'',Unidad:'',Precio:'',Proveedor:'',CC:''}
+  );
+  const s=(k,v)=>setF(x=>({...x,[k]:v}));
   return(
     <div className="modal">
-      <div className="modal-header"><h3>Nuevo concepto</h3><button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button></div>
+      <div className="modal-header">
+        <h3>{isEdit?'Editar concepto':'Nuevo concepto'}</h3>
+        <button className="btn btn-sm" onClick={onClose}><i className="ti ti-x"/></button>
+      </div>
       <div className="modal-body">
         <div className="form-group"><label>Nombre *</label><input placeholder="Ej: Concreto premezclado f'c=250" value={f.Nombre} onChange={e=>s('Nombre',e.target.value)}/></div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
@@ -1140,13 +1230,19 @@ function ModalNuevoConcepto({onSave,onClose}){
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <div className="form-group"><label>Precio unitario *</label><input type="number" step="any" placeholder="0.00" value={f.Precio} onChange={e=>s('Precio',e.target.value)}/></div>
-          <div className="form-group"><label>Proveedor</label><input placeholder="Proveedor local" value={f.Proveedor} onChange={e=>s('Proveedor',e.target.value)}/></div>
+          <div className="form-group"><label>Proveedor</label><input placeholder="Proveedor" value={f.Proveedor} onChange={e=>s('Proveedor',e.target.value)}/></div>
         </div>
         <div className="form-group"><label>Clave / C.C</label><input placeholder="MAT-099" value={f.CC} onChange={e=>s('CC',e.target.value)}/></div>
+        {isEdit&&<div style={{background:'#eff6ff',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#2563eb'}}>
+          <i className="ti ti-info-circle" style={{marginRight:6}}/>
+          {hasScript()?'Los cambios se sincronizarán en Google Sheets al guardar.':'Los cambios se guardarán localmente.'}
+        </div>}
       </div>
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" disabled={!f.Nombre||!f.Categoria||!f.Unidad||!f.Precio} onClick={()=>onSave(f)}>Agregar al catálogo</button>
+        <button className="btn btn-primary" disabled={!f.Nombre||!f.Categoria||!f.Unidad||!f.Precio} onClick={()=>onSave(f)}>
+          {isEdit?<><i className="ti ti-check"/>Guardar cambios</>:<><i className="ti ti-plus"/>Agregar al catálogo</>}
+        </button>
       </div>
     </div>
   );
