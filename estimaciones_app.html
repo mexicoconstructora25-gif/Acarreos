@@ -113,7 +113,7 @@ const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977
 
 // ⚠️ Pega aquí la URL de tu Apps Script desplegado
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzDoPLDeX6DLIwkuW0qHMwUeqEdzmLvx1udedB1puQZZr5GLYC9gyw106rc5BgJNK_0/exec';
-const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbzDoPLDeX6DLIwkuW0qHMwUeqEdzmLvx1udedB1puQZZr5GLYC9gyw106rc5BgJNK_0/exec';
+const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='PEGA_TU_URL_AQUI';
 const CAT_HEADERS=['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC'];
 async function apiPost(body){
   const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
