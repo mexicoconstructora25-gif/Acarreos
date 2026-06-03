@@ -112,8 +112,8 @@ const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
 // ⚠️ Pega aquí la URL de tu Apps Script desplegado
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwbJWnaiZn6bQMBYc6wbOFMa_9mXba5_qGodNHBgFWoZRA361_FdMfU3r2k9ViLz05z/exec';
-const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbwbJWnaiZn6bQMBYc6wbOFMa_9mXba5_qGodNHBgFWoZRA361_FdMfU3r2k9ViLz05z/exec';
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbz5cZ1oG3n0RxHuwNV_gpgoMg7eNF0gxnOPz61z8Cg3VGMBSyJz_TZ4OtqgcE2kMYA/exec';
+const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbz5cZ1oG3n0RxHuwNV_gpgoMg7eNF0gxnOPz61z8Cg3VGMBSyJz_TZ4OtqgcE2kMYA/exec';
 const CAT_HEADERS=['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC'];
 async function apiPost(body){
   const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -249,6 +249,7 @@ function App(){
   const [catalogoExtra,setCatalogoExtra]=useState([]);
   // Contraseñas hasheadas
   const [creds,setCreds]=useState({admin:hashPwd('admin123'),user:hashPwd('user123')});
+  const [sheetOk,setSheetOk]=useState(false);
 
   useEffect(()=>{
     const saved=localStorage.getItem('estimaciones_v1');
@@ -274,26 +275,33 @@ function App(){
 
   async function loadSheet(){
     setLoading(true);setSyncMsg('Conectando con Google Sheets...');
+    if(!hasScript()){setCatalogo(DEMO);setSyncMsg('⚠️ Sin URL de Apps Script configurada');setLoading(false);return;}
     try{
-      const r=await fetch(SHEETS_CSV);
-      if(!r.ok)throw new Error();
-      const t=await r.text();
-      const d=parseCSV(t);
-      if(d.length>0){
+      const r=await fetch(APPS_SCRIPT_URL+'?action=getcatalogo',{redirect:'follow'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(Array.isArray(d)&&d.length>0){
         setCatalogo(d);
-        // Limpiar del catalogoExtra los que ya están en el Sheet (evita duplicados)
-        const ids=new Set(d.map(x=>x.id||x.Nombre));
+        setSheetOk(true);
+        // Limpiar del catalogoExtra los que ya están en el Sheet
+        const ids=new Set(d.map(x=>String(x.id)));
         setCatalogoExtra(prev=>{
-          const cleaned=prev.filter(x=>!ids.has(x.id)&&!ids.has(x.Nombre));
+          const cleaned=prev.filter(x=>!ids.has(String(x.id)));
           saveAll({catalogo_extra:cleaned});
           return cleaned;
         });
         setSyncMsg(`✓ ${d.length} productos cargados desde Google Sheets`);
+      } else if(Array.isArray(d)&&d.length===0){
+        setCatalogo([]);setSheetOk(true);setSyncMsg('Sheet vacío — catálogo en blanco');
+      } else {
+        throw new Error(d&&d.error?d.error:'Respuesta inesperada');
       }
-      else{setCatalogo(DEMO);setSyncMsg('Sheet vacío — usando datos demo');}
-    }catch{setCatalogo(DEMO);setSyncMsg('Sin conexión al Sheet — usando datos demo');}
+    }catch(err){
+      setCatalogo(DEMO);setSheetOk(false);
+      setSyncMsg('⚠️ Sin conexión al Sheet: '+err.message);
+    }
     setLoading(false);
-    setTimeout(()=>setSyncMsg(''),4000);
+    setTimeout(()=>setSyncMsg(''),5000);
   }
 
   const openModal=(t,d=null)=>setModal({t,d});
@@ -337,7 +345,11 @@ function App(){
   function saveEmpresa(e){setEmpresa(e);saveAll({empresa:e});closeModal();}
 
   async function saveNuevoConcepto(c){
-    const newItem={...c,id:uid(),fuente:'local'};
+    // Generar ID consecutivo formato E00001
+    const allIds=[...catalogo,...catalogoExtra].map(x=>x.id||'').filter(x=>/^E\d+$/.test(x));
+    const maxNum=allIds.length>0?Math.max(...allIds.map(x=>parseInt(x.slice(1),10))):0;
+    const newId='E'+String(maxNum+1).padStart(5,'0');
+    const newItem={...c,id:newId,fuente:'local'};
     const next=[...catalogoExtra,newItem];
     setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
     if(hasScript()){
@@ -448,7 +460,7 @@ function App(){
           :<>
             {view==='dashboard'&&<Dashboard est={estimaciones} cat={catTotal} hp={histPrecios} fmt={fmt} fmtN={fmtN} total={totalEstimado} setView={setView} openModal={openModal}/>}
             {view==='estimaciones'&&<Estimaciones est={estimaciones} cat={catTotal} hp={histPrecios} fmt={fmt} fmtN={fmtN} openModal={openModal} delEst={delEst} removeItem={removeItem} perfil={perfil}/>}
-            {view==='catalogo'&&perfil==='admin'&&<Catalogo cat={catTotal} catalogoExtra={catalogoExtra} fmt={fmt} hp={histPrecios} savePrecio={savePrecio} toggleVigente={toggleVigente} openModal={openModal} delConcepto={delConcepto} updateConcepto={updateConcepto}/>}
+            {view==='catalogo'&&perfil==='admin'&&<Catalogo cat={catTotal} catalogoExtra={catalogoExtra} fmt={fmt} hp={histPrecios} savePrecio={savePrecio} toggleVigente={toggleVigente} openModal={openModal} delConcepto={delConcepto} updateConcepto={updateConcepto} sheetOk={sheetOk}/>}
             {view==='precios'&&perfil==='admin'&&<HistPrecios hp={histPrecios} cat={catTotal} est={estimaciones} fmt={fmt} fmtN={fmtN} openModal={openModal} toggleVigente={toggleVigente}/>}
             {view==='reportes'&&perfil==='admin'&&<Reportes est={estimaciones} fmt={fmt} fmtN={fmtN}/>}
             {view==='empresa'&&perfil==='admin'&&<VistaEmpresa empresa={empresa} onSave={saveEmpresa}/>}
@@ -461,8 +473,8 @@ function App(){
           {modal.t==='nueva-est'&&<ModalNuevaEst estimaciones={estimaciones} onSave={saveEst} onClose={closeModal}/>}
           {modal.t==='add-item'&&<ModalAddItem estId={modal.d} cat={catTotal} hp={histPrecios} onSave={addItem} onClose={closeModal}/>}
           {modal.t==='nuevo-precio'&&<ModalNuevoPrecio cat={catTotal} onSave={savePrecio} onClose={closeModal}/>}
-          {modal.t==='nuevo-concepto'&&<ModalConcepto item={null} onSave={saveNuevoConcepto} onClose={closeModal}/>}
-          {modal.t==='edit-concepto'&&<ModalConcepto item={modal.d} onSave={datos=>updateConcepto(modal.d.id,datos)} onClose={closeModal}/>}
+          {modal.t==='nuevo-concepto'&&<ModalConcepto item={null} onSave={saveNuevoConcepto} onClose={closeModal} sheetOk={sheetOk}/>}
+          {modal.t==='edit-concepto'&&<ModalConcepto item={modal.d} onSave={datos=>updateConcepto(modal.d.id,datos)} onClose={closeModal} sheetOk={sheetOk}/>}
         </div>
       )}
     </div>
@@ -654,7 +666,7 @@ function Estimaciones({est,cat,hp,fmt,fmtN,openModal,delEst,removeItem,perfil}){
 // ══════════════════════════════════════════════════════════════════════════════
 // CATÁLOGO con edición inline y panel de precios
 // ══════════════════════════════════════════════════════════════════════════════
-function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,delConcepto,updateConcepto}){
+function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,delConcepto,updateConcepto,sheetOk}){
   const [q,setQ]=useState('');
   const [selId,setSelId]=useState(null);
   const [showAddPrecio,setShowAddPrecio]=useState(false);
@@ -676,7 +688,7 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
         <h1>Catálogo de productos</h1>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <span className="badge badge-blue">{cat.length} productos</span>
-          {hasScript()
+          {sheetOk
             ?<span className="badge badge-green"><i className="ti ti-cloud"/>Sheet conectado</span>
             :<span className="badge badge-amber"><i className="ti ti-cloud-off"/>Solo local</span>
           }
@@ -1239,14 +1251,16 @@ function ModalNuevoPrecio({cat,onSave,onClose}){
   );
 }
 
-function ModalConcepto({item,onSave,onClose}){
+function ModalConcepto({item,onSave,onClose,sheetOk=false}){
   const isEdit=!!item;
   const CATS_BASE=['Materiales','Acero','Mampostería','Pétreos','Instalaciones','Eléctrico','Mano de Obra','Herramienta','Otro'];
   const initCat=isEdit?(item.Categoria||''):'';
+  // Normalizar: buscar en la lista ignorando mayúsculas
+  const matchedCat=CATS_BASE.find(c=>c.toLowerCase()===initCat.toLowerCase())||initCat;
   // Si la categoría existente no está en la lista base, la agregamos para que el select funcione
-  const cats=CATS_BASE.includes(initCat)||!initCat?CATS_BASE:[...CATS_BASE,initCat];
+  const cats=CATS_BASE.find(c=>c.toLowerCase()===initCat.toLowerCase())||!initCat?CATS_BASE:[...CATS_BASE,initCat];
   const [f,setF]=useState(isEdit
-    ?{Nombre:item.Nombre||'',Categoria:initCat,Unidad:item.Unidad||'',Precio:item.Precio||'',Proveedor:item.Proveedor||'',CC:item.CC||''}
+    ?{Nombre:item.Nombre||'',Categoria:matchedCat,Unidad:item.Unidad||'',Precio:item.Precio||'',Proveedor:item.Proveedor||'',CC:item.CC||''}
     :{Nombre:'',Categoria:'',Unidad:'',Precio:'',Proveedor:'',CC:''}
   );
   const s=(k,v)=>setF(x=>({...x,[k]:v}));
@@ -1277,7 +1291,7 @@ function ModalConcepto({item,onSave,onClose}){
         <div className="form-group"><label>Clave / C.C</label><input placeholder="MAT-099" value={f.CC} onChange={e=>s('CC',e.target.value)}/></div>
         {isEdit&&<div style={{background:'#eff6ff',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#2563eb'}}>
           <i className="ti ti-info-circle" style={{marginRight:6}}/>
-          {hasScript()?'Los cambios se sincronizarán en Google Sheets al guardar.':'Los cambios se guardarán localmente.'}
+          {sheetOk?'Los cambios se sincronizarán en Google Sheets al guardar.':'Los cambios se guardarán localmente.'}
         </div>}
       </div>
       <div className="modal-footer">
