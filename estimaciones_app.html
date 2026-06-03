@@ -112,8 +112,8 @@ const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
 // ⚠️ Pega aquí la URL de tu Apps Script desplegado
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzDoPLDeX6DLIwkuW0qHMwUeqEdzmLvx1udedB1puQZZr5GLYC9gyw106rc5BgJNK_0/exec';
-const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='PEGA_TU_URL_AQUI';
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwbJWnaiZn6bQMBYc6wbOFMa_9mXba5_qGodNHBgFWoZRA361_FdMfU3r2k9ViLz05z/exec';
+const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbwbJWnaiZn6bQMBYc6wbOFMa_9mXba5_qGodNHBgFWoZRA361_FdMfU3r2k9ViLz05z/exec';
 const CAT_HEADERS=['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC'];
 async function apiPost(body){
   const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -341,28 +341,51 @@ function App(){
     const next=[...catalogoExtra,newItem];
     setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
     if(hasScript()){
-      try{await apiPost({action:'addRow',sheet:'Catalogo',row:newItem,headers:CAT_HEADERS});}
+      try{await apiPost({action:'addRow',sheet:'catalogo',row:newItem,headers:CAT_HEADERS});}
       catch(e){console.warn('Sheet sync error:',e);}
     }
   }
 
   async function updateConcepto(id,datos){
-    // datos puede ser objeto completo {Nombre,Categoria,...} o {field,value} legado
-    const next=catalogoExtra.map(c=>c.id===id?{...c,...datos}:c);
-    setCatalogoExtra(next);saveAll({catalogo_extra:next});closeModal();
-    if(hasScript()){
-      const item=next.find(c=>c.id===id);
-      if(item)try{await apiPost({action:'updateRow',sheet:'Catalogo',id,row:item,headers:CAT_HEADERS});}
-      catch(e){console.warn('Sheet sync error:',e);}
+    const isLocal=catalogoExtra.some(c=>c.id===id);
+    const isSheet=catalogo.some(c=>c.id===id);
+    if(isLocal){
+      // Actualizar en catalogoExtra local
+      const next=catalogoExtra.map(c=>c.id===id?{...c,...datos}:c);
+      setCatalogoExtra(next);saveAll({catalogo_extra:next});
+      if(hasScript()){
+        const item=next.find(c=>c.id===id);
+        if(item)try{await apiPost({action:'updateRow',sheet:'catalogo',id,row:item,headers:CAT_HEADERS});}
+        catch(e){console.warn('Sheet sync error:',e);}
+      }
+    } else if(isSheet){
+      // Item del Sheet: actualizar en Sheet directamente
+      const original=catalogo.find(c=>c.id===id);
+      const updated={...original,...datos};
+      setCatalogo(prev=>prev.map(c=>c.id===id?updated:c));
+      if(hasScript()){
+        try{
+          const r=await apiPost({action:'updateRow',sheet:'catalogo',id,row:updated,headers:CAT_HEADERS});
+          if(r&&r.ok){setSyncMsg('✓ Cambios guardados en Google Sheets');}
+          else{setSyncMsg('⚠️ Error al guardar: '+(r&&r.error||'sin respuesta'));}
+          setTimeout(()=>setSyncMsg(''),4000);
+        }catch(e){console.warn('Sheet sync error:',e);}
+      }
     }
+    closeModal();
   }
 
   async function delConcepto(id){
+    const isLocal=catalogoExtra.some(c=>c.id===id);
     const next=catalogoExtra.filter(c=>c.id!==id);
     setCatalogoExtra(next);saveAll({catalogo_extra:next});
-    if(hasScript()){
-      try{await apiPost({action:'deleteRow',sheet:'Catalogo',id});}
-      catch(e){console.warn('Sheet sync error:',e);}
+    if(isLocal||catalogo.some(c=>c.id===id)){
+      // Si también estaba en el Sheet cargado, quitarlo del estado
+      setCatalogo(prev=>prev.filter(c=>c.id!==id));
+      if(hasScript()){
+        try{await apiPost({action:'deleteRow',sheet:'catalogo',id});}
+        catch(e){console.warn('Sheet sync error:',e);}
+      }
     }
   }
   function changeCreds(role,newPwd){
@@ -686,9 +709,9 @@ function Catalogo({cat,catalogoExtra,fmt,hp,savePrecio,toggleVigente,openModal,d
                           <button className="btn btn-sm" title="Editar" onClick={()=>openModal('edit-concepto',c)}>
                             <i className="ti ti-edit"/>
                           </button>
-                          {local&&<button className="btn btn-sm btn-danger" title="Eliminar" onClick={()=>{if(confirm(`¿Eliminar "${c.Nombre}"?`))delConcepto(c.id);}}>
+                          <button className="btn btn-sm btn-danger" title="Eliminar" onClick={()=>{if(confirm(`¿Eliminar "${c.Nombre}" del catálogo?`))delConcepto(c.id);}}>
                             <i className="ti ti-trash"/>
-                          </button>}
+                          </button>
                         </div>
                       </td>
                     </tr>
