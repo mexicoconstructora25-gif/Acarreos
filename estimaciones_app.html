@@ -112,8 +112,8 @@ const {useState,useEffect,useRef,useCallback}=React;
 const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
 
 // ⚠️ Pega aquí la URL de tu Apps Script desplegado
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbz5cZ1oG3n0RxHuwNV_gpgoMg7eNF0gxnOPz61z8Cg3VGMBSyJz_TZ4OtqgcE2kMYA/exec';
-const hasScript=()=>APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=='https://script.google.com/macros/s/AKfycbz5cZ1oG3n0RxHuwNV_gpgoMg7eNF0gxnOPz61z8Cg3VGMBSyJz_TZ4OtqgcE2kMYA/exec';
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwSlsb2-rVkuLXFddyz-qa32-Khv1YPsbY0dhORCAD2U1nk2bqoJb8I0MFLGIvtyN-M/exec';
+const hasScript=()=>!!(APPS_SCRIPT_URL&&APPS_SCRIPT_URL.startsWith('https://script.google.com/'));
 const CAT_HEADERS=['id','Nombre','Categoria','Unidad','Precio','Proveedor','CC'];
 async function apiPost(body){
   const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -275,30 +275,59 @@ function App(){
 
   async function loadSheet(){
     setLoading(true);setSyncMsg('Conectando con Google Sheets...');
-    if(!hasScript()){setCatalogo(DEMO);setSyncMsg('⚠️ Sin URL de Apps Script configurada');setLoading(false);return;}
-    try{
-      const r=await fetch(APPS_SCRIPT_URL+'?action=getcatalogo',{redirect:'follow'});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const d=await r.json();
-      if(Array.isArray(d)&&d.length>0){
-        setCatalogo(d);
-        setSheetOk(true);
-        // Limpiar del catalogoExtra los que ya están en el Sheet
-        const ids=new Set(d.map(x=>String(x.id)));
-        setCatalogoExtra(prev=>{
-          const cleaned=prev.filter(x=>!ids.has(String(x.id)));
-          saveAll({catalogo_extra:cleaned});
-          return cleaned;
-        });
-        setSyncMsg(`✓ ${d.length} productos cargados desde Google Sheets`);
-      } else if(Array.isArray(d)&&d.length===0){
-        setCatalogo([]);setSheetOk(true);setSyncMsg('Sheet vacío — catálogo en blanco');
-      } else {
-        throw new Error(d&&d.error?d.error:'Respuesta inesperada');
+    // Intentar cargar via Apps Script (JSON, datos frescos)
+    // Si falla por CORS, usar CSV publicado como fallback
+    let loaded=false;
+    if(hasScript()){
+      try{
+        const r=await fetch(APPS_SCRIPT_URL+'?action=getcatalogo');
+        const text=await r.text();
+        const d=JSON.parse(text);
+        if(Array.isArray(d)){
+          const clean=d.filter(x=>Object.values(x).some(v=>v));
+          setCatalogo(clean);
+          setSheetOk(true);
+          const ids=new Set(clean.map(x=>String(x.id)));
+          setCatalogoExtra(prev=>{
+            const cleaned=prev.filter(x=>!ids.has(String(x.id)));
+            saveAll({catalogo_extra:cleaned});
+            return cleaned;
+          });
+          setSyncMsg('✓ '+clean.length+' productos cargados desde Google Sheets');
+          loaded=true;
+        }
+      }catch(e){
+        console.warn('Apps Script GET falló, intentando CSV:',e.message);
       }
-    }catch(err){
+    }
+    // Fallback: CSV publicado
+    if(!loaded){
+      try{
+        const r=await fetch(SHEETS_CSV);
+        if(!r.ok)throw new Error();
+        const t=await r.text();
+        const d=parseCSV(t);
+        if(d.length>0){
+          setCatalogo(d);
+          setSheetOk(true);
+          const ids=new Set(d.map(x=>String(x.id||x.Nombre)));
+          setCatalogoExtra(prev=>{
+            const cleaned=prev.filter(x=>!ids.has(String(x.id))&&!ids.has(String(x.Nombre)));
+            saveAll({catalogo_extra:cleaned});
+            return cleaned;
+          });
+          setSyncMsg('✓ '+d.length+' productos cargados (CSV)');
+          loaded=true;
+        } else {
+          setCatalogo([]);setSheetOk(true);setSyncMsg('Sheet vacío');loaded=true;
+        }
+      }catch(e2){
+        console.warn('CSV fallback también falló:',e2.message);
+      }
+    }
+    if(!loaded){
       setCatalogo(DEMO);setSheetOk(false);
-      setSyncMsg('⚠️ Sin conexión al Sheet: '+err.message);
+      setSyncMsg('Sin conexión — mostrando datos demo');
     }
     setLoading(false);
     setTimeout(()=>setSyncMsg(''),5000);
