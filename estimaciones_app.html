@@ -109,7 +109,7 @@ tr.cat-sel td{background:#eff6ff!important}
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
-const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pub?output=csv";
+const SHEETS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTnB7hcrgLe977j_vQmi_bWqdsjOTZJhKpy2coyPYSF3nXpnaIA-8I6Hx_OIoTgVGZkXN3mOI-9H8sV/pubhtml";
 
 // ⚠️ Pega aquí la URL de tu Apps Script desplegado
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzDoPLDeX6DLIwkuW0qHMwUeqEdzmLvx1udedB1puQZZr5GLYC9gyw106rc5BgJNK_0/exec';
@@ -1204,9 +1204,12 @@ function ModalNuevoPrecio({cat,onSave,onClose}){
 
 function ModalConcepto({item,onSave,onClose}){
   const isEdit=!!item;
-  const cats=['Materiales','Acero','Mampostería','Pétreos','Instalaciones','Eléctrico','Mano de Obra','Herramienta','Otro'];
+  const CATS_BASE=['Materiales','Acero','Mampostería','Pétreos','Instalaciones','Eléctrico','Mano de Obra','Herramienta','Otro'];
+  const initCat=isEdit?(item.Categoria||''):'';
+  // Si la categoría existente no está en la lista base, la agregamos para que el select funcione
+  const cats=CATS_BASE.includes(initCat)||!initCat?CATS_BASE:[...CATS_BASE,initCat];
   const [f,setF]=useState(isEdit
-    ?{Nombre:item.Nombre||'',Categoria:item.Categoria||'',Unidad:item.Unidad||'',Precio:item.Precio||'',Proveedor:item.Proveedor||'',CC:item.CC||''}
+    ?{Nombre:item.Nombre||'',Categoria:initCat,Unidad:item.Unidad||'',Precio:item.Precio||'',Proveedor:item.Proveedor||'',CC:item.CC||''}
     :{Nombre:'',Categoria:'',Unidad:'',Precio:'',Proveedor:'',CC:''}
   );
   const s=(k,v)=>setF(x=>({...x,[k]:v}));
@@ -1221,10 +1224,12 @@ function ModalConcepto({item,onSave,onClose}){
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <div className="form-group">
             <label>Categoría *</label>
-            <select value={f.Categoria} onChange={e=>s('Categoria',e.target.value)}>
+            <select value={CATS_BASE.includes(f.Categoria)?f.Categoria:'__custom__'} onChange={e=>{if(e.target.value!=='__custom__')s('Categoria',e.target.value);else s('Categoria','');}}>
               <option value="">— Selecciona —</option>
               {cats.map(c=><option key={c} value={c}>{c}</option>)}
+              <option value="__custom__">✏️ Otra (escribe abajo)</option>
             </select>
+            {!CATS_BASE.includes(f.Categoria)&&<input style={{marginTop:6}} placeholder="Escribe la categoría" value={f.Categoria} onChange={e=>s('Categoria',e.target.value)}/>}
           </div>
           <div className="form-group"><label>Unidad *</label><input placeholder="M3, Pieza, Metro..." value={f.Unidad} onChange={e=>s('Unidad',e.target.value)}/></div>
         </div>
