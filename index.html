@@ -259,6 +259,14 @@
     <div id="matConciliados"></div>
   </div>
 
+  <!-- PANEL CONCILIADOS SEMANA -->
+  <div class="panel" id="panelConciliadosSemana" style="display:none;">
+    <div class="section-title">✅ Conciliados de la semana</div>
+    <div class="metric-grid" id="metricConciliadosSemana" style="margin-bottom:1rem;"></div>
+    <div class="section-title" style="margin-top:0.5rem;">Por material</div>
+    <div id="matConciliadosSemana"></div>
+  </div>
+
   <!-- PANEL CONCILIADOS TODO (detalle por día) -->
   <div class="panel" id="panelConciliadosTodo" style="display:none;">
     <div class="section-title">✅ Conciliados del mes — detalle por día</div>
@@ -395,12 +403,14 @@ function setPeriodo(p, el) {
   document.getElementById('datePickerRow').style.display = p === 'fecha' ? 'flex' : 'none';
   document.getElementById('filtroBar').style.display = p === 'todo' ? 'flex' : 'none';
   document.getElementById('panelConciliados').style.display = p === 'mes' ? 'block' : 'none';
+  document.getElementById('panelConciliadosSemana').style.display = p === 'semana' ? 'block' : 'none';
   document.getElementById('panelConciliadosTodo').style.display = p === 'todo' ? 'block' : 'none';
   if (p !== 'fecha') {
     if (p !== 'todo') limpiarFiltros();
     const filtrados = filtrarPorPeriodo(allRows);
     render(filtrados);
     if (p === 'mes') renderConciliados();
+    if (p === 'semana') renderConciliadosSemana();
     if (p === 'todo') renderConciliadosTodo();
   }
 }
@@ -684,6 +694,69 @@ function renderConciliados() {
       <div style="font-size:12px;color:#22c55e;font-family:'IBM Plex Mono',monospace;min-width:90px;text-align:right;">$${d.subtotal.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
     </div>
   `).join('') : '<div style="text-align:center;padding:2rem;color:#64748b;font-family:\'IBM Plex Mono\',monospace;font-size:12px;">Sin conciliados este mes</div>';
+}
+
+function renderConciliadosSemana() {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const diaSemana = hoy.getDay() === 0 ? 7 : hoy.getDay();
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - diaSemana + 1);
+
+  const conciliados = allRows.filter(r => {
+    const st = (r['status'] || '').trim().toUpperCase();
+    if (st !== 'CONCILIADO') return false;
+    const f = parseFecha(r['fecha1'] || '');
+    if (!f) return false;
+    f.setHours(0,0,0,0);
+    return f >= lunes && f <= hoy;
+  });
+
+  const totalVol = conciliados.reduce((s,r) => s + (parseFloat(r['volumen'])||0), 0);
+  const totalSub = conciliados.reduce((s,r) => s + (parseFloat((r['Subtotal']||'0').replace(/[$,]/g,''))||0), 0);
+
+  const matMap = {};
+  conciliados.forEach(r => {
+    const m = r['materialaca'] || 'Sin especificar';
+    if (!matMap[m]) matMap[m] = { vol: 0, subtotal: 0, count: 0 };
+    matMap[m].vol += parseFloat(r['volumen']) || 0;
+    matMap[m].subtotal += parseFloat((r['Subtotal']||'0').replace(/[$,]/g,'')) || 0;
+    matMap[m].count++;
+  });
+  const mats = Object.entries(matMap).sort((a,b) => b[1].vol - a[1].vol);
+  const maxVol = mats[0]?.[1].vol || 1;
+
+  document.getElementById('metricConciliadosSemana').innerHTML = `
+    <div class="metric green">
+      <div class="metric-label">Registros conciliados</div>
+      <div class="metric-value">${conciliados.length}</div>
+      <div class="metric-unit">esta semana</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Volumen conciliado</div>
+      <div class="metric-value">${totalVol.toLocaleString('es-MX',{maximumFractionDigits:1})}</div>
+      <div class="metric-unit">m³</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Subtotal conciliado</div>
+      <div class="metric-value" style="font-size:18px">$${totalSub.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+      <div class="metric-unit">MXN</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Materiales</div>
+      <div class="metric-value">${mats.length}</div>
+      <div class="metric-unit">tipos</div>
+    </div>
+  `;
+
+  document.getElementById('matConciliadosSemana').innerHTML = mats.length ? mats.map(([nombre, d], i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div style="width:8px;height:8px;border-radius:50%;background:${MAT_COLORS[i%MAT_COLORS.length]};flex-shrink:0;"></div>
+      <div style="flex:1;font-size:13px;color:#94a3b8;">${nombre}</div>
+      <div style="font-size:11px;color:#64748b;font-family:'IBM Plex Mono',monospace;min-width:55px;text-align:right;">${d.count} viajes</div>
+      <div style="width:100px;"><div style="background:rgba(255,255,255,0.06);border-radius:2px;height:4px;"><div style="height:4px;border-radius:2px;background:#22c55e;width:${Math.round(d.vol/maxVol*100)}%"></div></div></div>
+      <div style="font-size:13px;font-weight:500;color:#f1f5f9;font-family:'IBM Plex Mono',monospace;min-width:80px;text-align:right;">${d.vol.toLocaleString('es-MX',{maximumFractionDigits:1})} m³</div>
+      <div style="font-size:12px;color:#22c55e;font-family:'IBM Plex Mono',monospace;min-width:90px;text-align:right;">$${d.subtotal.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+    </div>
+  `).join('') : '<div style="text-align:center;padding:2rem;color:#64748b;font-family:\'IBM Plex Mono\',monospace;font-size:12px;">Sin conciliados esta semana</div>';
 }
 
 function renderConciliadosTodo() {
