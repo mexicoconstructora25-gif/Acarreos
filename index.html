@@ -251,6 +251,30 @@
     </div>
   </div>
 
+  <!-- PANEL CONCILIADOS SEMANA -->
+  <div class="panel" id="panelConciliados" style="display:none;">
+    <div class="section-title">✅ Conciliados de la semana</div>
+    <div class="metric-grid" id="metricConciliados" style="margin-bottom:1rem;"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Fecha conciliación</th>
+            <th>Material</th>
+            <th>Volumen (m³)</th>
+            <th>Placas</th>
+            <th>Tiro / Destino</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="tablaConciliados">
+          <tr><td colspan="7" class="loading">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="panel">
     <div class="section-title">Registros del período</div>
     <div class="table-wrap">
@@ -368,10 +392,13 @@ function setPeriodo(p, el) {
   picker.style.display = p === 'fecha' ? 'flex' : 'none';
   const filtroBar = document.getElementById('filtroBar');
   filtroBar.style.display = p === 'todo' ? 'flex' : 'none';
+  const panelConc = document.getElementById('panelConciliados');
+  panelConc.style.display = p === 'semana' ? 'block' : 'none';
   if (p !== 'fecha') {
     if (p !== 'todo') limpiarFiltros();
     const filtrados = filtrarPorPeriodo(allRows);
     render(filtrados);
+    if (p === 'semana') renderConciliados();
   }
 }
 
@@ -592,6 +619,60 @@ function limpiarFiltros() {
   document.getElementById('filtroActivoLabel').textContent = '';
   const filtrados = filtrarPorPeriodo(allRows);
   render(filtrados);
+}
+
+function renderConciliados() {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const diaSemana = hoy.getDay() === 0 ? 7 : hoy.getDay();
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - diaSemana + 1);
+
+  const conciliados = allRows.filter(r => {
+    const st = (r['status'] || '').trim().toUpperCase();
+    if (st !== 'CONCILIADO') return false;
+    const f = parseFecha(r['fecha1'] || '');
+    if (!f) return false;
+    f.setHours(0,0,0,0);
+    return f >= lunes && f <= hoy;
+  });
+
+  const totalVol = conciliados.reduce((s,r) => s + (parseFloat(r['volumen'])||0), 0);
+  const totalSub = conciliados.reduce((s,r) => s + (parseFloat((r['Subtotal']||'0').replace(/[$,]/g,''))||0), 0);
+  const mats = [...new Set(conciliados.map(r => r['materialaca']).filter(Boolean))].length;
+
+  document.getElementById('metricConciliados').innerHTML = `
+    <div class="metric green">
+      <div class="metric-label">Registros conciliados</div>
+      <div class="metric-value">${conciliados.length}</div>
+      <div class="metric-unit">esta semana</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Volumen conciliado</div>
+      <div class="metric-value">${totalVol.toLocaleString('es-MX',{maximumFractionDigits:1})}</div>
+      <div class="metric-unit">m³</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Subtotal conciliado</div>
+      <div class="metric-value" style="font-size:18px">$${totalSub.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+      <div class="metric-unit">MXN</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">Materiales</div>
+      <div class="metric-value">${mats}</div>
+      <div class="metric-unit">tipos</div>
+    </div>
+  `;
+
+  document.getElementById('tablaConciliados').innerHTML = conciliados.length ? conciliados.map(r => `
+    <tr>
+      <td class="folio-val">${r['folio']||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:#22c55e">${r['fecha1']||'—'}</td>
+      <td>${r['materialaca']||'—'}</td>
+      <td style="font-family:var(--mono);font-weight:500">${parseFloat(r['volumen']||0).toLocaleString('es-MX',{maximumFractionDigits:2})}</td>
+      <td style="font-family:var(--mono);font-size:11px">${r['placas']||'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${r['DESCTIRO']||r['TIRO']||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px">$${parseFloat((r['Subtotal']||'0').replace(/[$,]/g,'')).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#64748b;font-family:\'IBM Plex Mono\',monospace;font-size:12px;">Sin conciliados esta semana</td></tr>';
 }
 
 function _unused(p, el) {
