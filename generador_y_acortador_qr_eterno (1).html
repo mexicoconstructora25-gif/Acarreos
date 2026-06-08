@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador y Acortador QR Eterno</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración copiada de tu consola de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDNvc4WzrpR9UA0fhQCwzvX1S4hHCKkRQ",
+            authDomain: "mi-acortador-qr.firebaseapp.com",
+            projectId: "mi-acortador-qr",
+            storageBucket: "mi-acortador-qr.firebasestorage.app",
+            messagingSenderId: "604558856358",
+            appId: "1:604558856358:web:b05776c361cf162b956467"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.guardarYGenerar = async function() {
+            const urlOriginal = document.getElementById('urlInput').value;
+            if (!urlOriginal) return alert("Por favor, ingresa una URL válida");
+
+            const id = Math.random().toString(36).substring(7);
+            
+            try {
+                // Guardar en la colección "links"
+                await setDoc(doc(db, "links", id), {
+                    originalUrl: urlOriginal,
+                    createdAt: new Date()
+                });
+
+                const shortLink = `${window.location.origin}/?r=${id}`;
+                
+                document.getElementById("qrcode").innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), { text: urlOriginal, width: 200, height: 200 });
+
+                document.getElementById("shortUrl").innerText = shortLink;
+                document.getElementById("shortUrl").href = urlOriginal;
+                document.getElementById("resultado").classList.remove("hidden");
+            } catch (e) {
+                console.error("Error al guardar: ", e);
+                alert("Ocurrió un error al guardar en la base de datos.");
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800 text-center">Generador de QR</h1>
+        
+        <div class="space-y-4">
+            <input type="text" id="urlInput" placeholder="https://ejemplo.com" 
+                   class="w-full border border-gray-300 rounded-lg p-2">
+            
+            <button onclick="guardarYGenerar()" 
+                    class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700">
+                Guardar y Generar QR
+            </button>
+        </div>
+
+        <div id="resultado" class="mt-8 hidden flex flex-col items-center space-y-4">
+            <div id="qrcode" class="p-2 border border-gray-200 rounded"></div>
+            <a id="shortUrl" href="#" target="_blank" class="text-blue-600 font-semibold underline"></a>
+        </div>
+    </div>
+</body>
+</html>
