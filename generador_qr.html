@@ -45,7 +45,7 @@
             const id = Math.random().toString(36).substring(7);
             
             // Mascara fija exacta: https://mexicoconstructora25.github.io/?r=id
-            const baseURL = "https://mexicoconstructora25.github.io";
+            const baseURL = "https://mexicoconstructora25.github.io/";
             const linkCorto = `${baseURL}/?r=${id}`;
             
             await setDoc(doc(db, "links", id), { originalUrl: url, createdAt: new Date() });
