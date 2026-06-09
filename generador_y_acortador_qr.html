@@ -22,6 +22,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // LÓGICA DE REDIRECCIÓN: Detecta el ID en la URL y busca en Firebase
         window.onload = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const r = urlParams.get('r');
@@ -42,12 +43,14 @@
             if (!url) return alert("Ingresa una URL");
 
             const id = Math.random().toString(36).substring(7);
-            const baseURL = "https://github.com/mexicoconstructora25-gif/Acarreos";
+            
+            // Mascara fija exacta: https://mexicoconstructora25.github.io/?r=id
+            const baseURL = "https://mexicoconstructora25";
             const linkCorto = `${baseURL}/?r=${id}`;
             
             await setDoc(doc(db, "links", id), { originalUrl: url, createdAt: new Date() });
 
-            // Generar QR basándose en el link corto, no en la URL larga
+            // Generar QR basándose en el link corto
             const qr = qrcode(0, 'H');
             qr.addData(linkCorto); 
             qr.make();
