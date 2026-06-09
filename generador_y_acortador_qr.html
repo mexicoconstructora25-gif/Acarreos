@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador y Acortador QR Eterno</title>
+    <title>Generador QR Personalizado</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Firebase SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración copiada de tu consola de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCDNvc4WzrpR9UA0fhQCwzvX1S4hHCKkRQ",
             authDomain: "mi-acortador-qr.firebaseapp.com",
@@ -24,53 +22,81 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.guardarYGenerar = async function() {
-            const urlOriginal = document.getElementById('urlInput').value;
-            if (!urlOriginal) return alert("Por favor, ingresa una URL válida");
+        window.onload = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const r = urlParams.get('r');
+            if (r) {
+                const docRef = doc(db, "links", r);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    window.location.href = docSnap.data().originalUrl;
+                }
+            }
+        };
+
+        window.generarPersonalizado = async () => {
+            const url = document.getElementById('urlInput').value;
+            const color = document.getElementById('colorInput').value;
+            const fileInput = document.getElementById('logoInput');
+            
+            if (!url) return alert("Ingresa una URL");
 
             const id = Math.random().toString(36).substring(7);
+            const baseURL = "https://github.com/mexicoconstructora25-gif/Acarreos";
+            const linkCorto = `${baseURL}/?r=${id}`;
             
-            try {
-                // Guardar en la colección "links"
-                await setDoc(doc(db, "links", id), {
-                    originalUrl: urlOriginal,
-                    createdAt: new Date()
-                });
+            await setDoc(doc(db, "links", id), { originalUrl: url, createdAt: new Date() });
 
-                const shortLink = `${window.location.origin}/?r=${id}`;
-                
-                document.getElementById("qrcode").innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), { text: urlOriginal, width: 200, height: 200 });
+            // Generar QR basándose en el link corto, no en la URL larga
+            const qr = qrcode(0, 'H');
+            qr.addData(linkCorto); 
+            qr.make();
 
-                document.getElementById("shortUrl").innerText = shortLink;
-                document.getElementById("shortUrl").href = urlOriginal;
-                document.getElementById("resultado").classList.remove("hidden");
-            } catch (e) {
-                console.error("Error al guardar: ", e);
-                alert("Ocurrió un error al guardar en la base de datos.");
+            const canvas = document.getElementById('qrCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = 300;
+            canvas.width = size; canvas.height = size;
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, size, size);
+            
+            const count = qr.getModuleCount();
+            const cellSize = size / count;
+            ctx.fillStyle = color;
+            for(let r=0; r<count; r++) {
+                for(let c=0; c<count; c++) {
+                    if(qr.isDark(r, c)) ctx.fillRect(c*cellSize, r*cellSize, cellSize, cellSize);
+                }
             }
+
+            // Agregar Logo
+            if(fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const logoSize = size/4;
+                        ctx.drawImage(img, (size-logoSize)/2, (size-logoSize)/2, logoSize, logoSize);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+
+            document.getElementById("shortUrl").innerText = linkCorto;
         };
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-6 text-gray-800 text-center">Generador de QR</h1>
-        
-        <div class="space-y-4">
-            <input type="text" id="urlInput" placeholder="https://ejemplo.com" 
-                   class="w-full border border-gray-300 rounded-lg p-2">
-            
-            <button onclick="guardarYGenerar()" 
-                    class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700">
-                Guardar y Generar QR
-            </button>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg space-y-4">
+        <h2 class="text-xl font-bold text-center">Acortador QR</h2>
+        <input type="text" id="urlInput" placeholder="URL original" class="w-full p-2 border rounded">
+        <div class="flex items-center gap-4">
+            <label>Color QR:</label>
+            <input type="color" id="colorInput" value="#000000">
+            <input type="file" id="logoInput" accept="image/*" class="text-sm">
         </div>
-
-        <div id="resultado" class="mt-8 hidden flex flex-col items-center space-y-4">
-            <div id="qrcode" class="p-2 border border-gray-200 rounded"></div>
-            <a id="shortUrl" href="#" target="_blank" class="text-blue-600 font-semibold underline"></a>
-        </div>
+        <button onclick="generarPersonalizado()" class="w-full bg-indigo-600 text-white p-2 rounded">Generar QR</button>
+        <canvas id="qrCanvas" class="mx-auto block"></canvas>
+        <p id="shortUrl" class="text-center text-blue-600 font-bold break-all"></p>
     </div>
 </body>
 </html>
