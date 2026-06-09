@@ -39,53 +39,49 @@
             const color = document.getElementById('colorInput').value;
             const fileInput = document.getElementById('logoInput');
             
-            if (!url) return alert("Por favor ingresa una URL válida");
+            if (!url) return alert("Ingresa una URL");
 
             const id = Math.random().toString(36).substring(7);
-            
-            // CORRECCIÓN: Esta es la URL exacta donde GitHub publica tu repositorio
-            const baseURL = "https://mexicoconstructora25.github.io/Acarreos";
+            const baseURL = "https://github.com/mexicoconstructora25-gif/Acarreos";
             const linkCorto = `${baseURL}/?r=${id}`;
             
-            try {
-                await setDoc(doc(db, "links", id), { originalUrl: url, createdAt: new Date() });
-                
-                const qr = qrcode(0, 'H');
-                qr.addData(linkCorto); 
-                qr.make();
+            await setDoc(doc(db, "links", id), { originalUrl: url, createdAt: new Date() });
 
-                const canvas = document.getElementById('qrCanvas');
-                const ctx = canvas.getContext('2d');
-                const size = 300;
-                canvas.width = size; canvas.height = size;
-                ctx.fillStyle = "white"; ctx.fillRect(0, 0, size, size);
-                
-                const count = qr.getModuleCount();
-                const cellSize = size / count;
-                ctx.fillStyle = color;
-                for(let r=0; r<count; r++) {
-                    for(let c=0; c<count; c++) {
-                        if(qr.isDark(r, c)) ctx.fillRect(c*cellSize, r*cellSize, cellSize, cellSize);
-                    }
-                }
+            // Generar QR basándose en el link corto, no en la URL larga
+            const qr = qrcode(0, 'H');
+            qr.addData(linkCorto); 
+            qr.make();
 
-                if(fileInput.files && fileInput.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const logoSize = size/4;
-                            ctx.drawImage(img, (size-logoSize)/2, (size-logoSize)/2, logoSize, logoSize);
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(fileInput.files[0]);
+            const canvas = document.getElementById('qrCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = 300;
+            canvas.width = size; canvas.height = size;
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, size, size);
+            
+            const count = qr.getModuleCount();
+            const cellSize = size / count;
+            ctx.fillStyle = color;
+            for(let r=0; r<count; r++) {
+                for(let c=0; c<count; c++) {
+                    if(qr.isDark(r, c)) ctx.fillRect(c*cellSize, r*cellSize, cellSize, cellSize);
                 }
-                document.getElementById("shortUrl").innerText = linkCorto;
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Error: Verifica que tu base de datos Firestore esté creada en modo prueba.");
             }
+
+            // Agregar Logo
+            if(fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const logoSize = size/4;
+                        ctx.drawImage(img, (size-logoSize)/2, (size-logoSize)/2, logoSize, logoSize);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+
+            document.getElementById("shortUrl").innerText = linkCorto;
         };
     </script>
 </head>
