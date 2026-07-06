@@ -3,103 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador QR Personalizado</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCDNvc4WzrpR9UA0fhQCwzvX1S4hHCKkRQ",
-            authDomain: "mi-acortador-qr.firebaseapp.com",
-            projectId: "mi-acortador-qr",
-            storageBucket: "mi-acortador-qr.firebasestorage.app",
-            messagingSenderId: "604558856358",
-            appId: "1:604558856358:web:b05776c361cf162b956467"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // LÓGICA DE REDIRECCIÓN: Detecta el ID en la URL y busca en Firebase
-        window.onload = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const r = urlParams.get('r');
-            if (r) {
-                const docRef = doc(db, "links", r);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    window.location.href = docSnap.data().originalUrl;
-                }
-            }
-        };
-
-        window.generarPersonalizado = async () => {
-            const url = document.getElementById('urlInput').value;
-            const color = document.getElementById('colorInput').value;
-            const fileInput = document.getElementById('logoInput');
-            
-            if (!url) return alert("Ingresa una URL");
-
-            const id = Math.random().toString(36).substring(7);
-            
-            // Mascara fija exacta: https://mexicoconstructora25.github.io/?r=id
-            const baseURL = "https://mexicoconstructora25.github.io/";
-            const linkCorto = `${baseURL}/?r=${id}`;
-            
-            await setDoc(doc(db, "links", id), { originalUrl: url, createdAt: new Date() });
-
-            // Generar QR basándose en el link corto
-            const qr = qrcode(0, 'H');
-            qr.addData(linkCorto); 
-            qr.make();
-
-            const canvas = document.getElementById('qrCanvas');
-            const ctx = canvas.getContext('2d');
-            const size = 300;
-            canvas.width = size; canvas.height = size;
-            ctx.fillStyle = "white"; ctx.fillRect(0, 0, size, size);
-            
-            const count = qr.getModuleCount();
-            const cellSize = size / count;
-            ctx.fillStyle = color;
-            for(let r=0; r<count; r++) {
-                for(let c=0; c<count; c++) {
-                    if(qr.isDark(r, c)) ctx.fillRect(c*cellSize, r*cellSize, cellSize, cellSize);
-                }
-            }
-
-            // Agregar Logo
-            if(fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const logoSize = size/4;
-                        ctx.drawImage(img, (size-logoSize)/2, (size-logoSize)/2, logoSize, logoSize);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            }
-
-            document.getElementById("shortUrl").innerText = linkCorto;
-        };
-    </script>
+    <title>Calculadora de Estimaciones (10% y 90%)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .upload-section {
+            border: 2px dashed #3498db;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            background-color: #f0f8ff;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .summary {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .info-text {
+            color: #2980b9;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 p-4">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg space-y-4">
-        <h2 class="text-xl font-bold text-center">Acortador QR</h2>
-        <input type="text" id="urlInput" placeholder="URL original" class="w-full p-2 border rounded">
-        <div class="flex items-center gap-4">
-            <label>Color QR:</label>
-            <input type="color" id="colorInput" value="#000000">
-            <input type="file" id="logoInput" accept="image/*" class="text-sm">
-        </div>
-        <button onclick="generarPersonalizado()" class="w-full bg-indigo-600 text-white p-2 rounded">Generar QR</button>
-        <canvas id="qrCanvas" class="mx-auto block"></canvas>
-        <p id="shortUrl" class="text-center text-blue-600 font-bold break-all"></p>
+<body>
+
+<div class="container">
+    <h1>Cálculo Exacto de Anticipo (10%) y Restante (90%)</h1>
+    
+    <div class="upload-section">
+        <p>Sube tu archivo Excel (.xlsx) o CSV. El sistema detectará automáticamente las columnas.</p>
+        <p class="info-text">
+            <i>Regla activa: Para conformar el 10% <b>no se usarán</b> las unidades: PZA, ESTUDIO, JGO, LOTE, SERV, TR, HM. Estas se irán completas a la tabla del 90%.</i>
+        </p>
+        <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv" />
+        <br>
+        <button onclick="procesarArchivo()">Procesar Archivo</button>
+        <div id="statusMessage"></div>
     </div>
+
+    <div id="results" style="display: none;">
+        <div class="summary" id="summaryBox"></div>
+        
+        <h3>1. Tabla del 10% (Anticipo)</h3>
+        <table id="table10">
+            <thead>
+                <tr>
+                    <th>CONCEPTO</th>
+                    <th>UNIDAD</th>
+                    <th>CANTIDAD</th>
+                    <th>P.U.</th>
+                    <th>IMPORTE</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>2. Tabla del 90% (Estimación Restante)</h3>
+        <table id="table90">
+            <thead>
+                <tr>
+                    <th>CONCEPTO</th>
+                    <th>UNIDAD</th>
+                    <th>CANTIDAD</th>
+                    <th>P.U.</th>
+                    <th>IMPORTE</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let globalItems = [];
+    
+    function formatMoney(amount) {
+        return '$' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function formatNumber(num) {
+        return num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function procesarArchivo() {
+        const fileUpload = document.getElementById('fileUpload');
+        const status = document.getElementById('statusMessage');
+        
+        status.innerHTML = '';
+        
+        if (!fileUpload.files || fileUpload.files.length === 0) {
+            status.innerHTML = '<span class="error">Por favor selecciona un archivo primero.</span>';
+            return;
+        }
+
+        const file = fileUpload.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convertir a JSON
+                const rawJson = XLSX.utils.sheet_to_json(worksheet, {defval: null});
+                
+                // Limpiar y normalizar los datos completos
+                globalItems = normalizarDatos(rawJson);
+                
+                if (globalItems.length === 0) {
+                    throw new Error("No se encontraron datos válidos en el archivo.");
+                }
+
+                calcularDesglose(globalItems);
+                status.innerHTML = '<span style="color: green; font-weight: bold;">¡Archivo procesado con éxito!</span>';
+                
+            } catch (error) {
+                status.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+                document.getElementById('results').style.display = 'none';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function normalizarDatos(jsonArray) {
+        let items = [];
+        
+        jsonArray.forEach(row => {
+            let item = { id: null, unidad: '', qty: 0, pu: 0, monto: 0 };
+            let hasData = false;
+            
+            for (let key in row) {
+                if (row[key] === null || row[key] === '') continue;
+                
+                let upperKey = key.toUpperCase().trim();
+                let val = row[key];
+                
+                if (upperKey.includes('NO.') || upperKey.includes('NUMERO') || upperKey.includes('CONCEPTO') || upperKey.includes('PARTIDA')) {
+                    item.id = val;
+                } else if (upperKey.includes('UNIDAD')) {
+                    item.unidad = val.toString().trim();
+                } else if (upperKey === 'CANTIDAD EST' || (upperKey.includes('CANTIDAD') && item.qty === 0)) {
+                    item.qty = parseFloat(val.toString().replace(/,/g, ''));
+                } else if (upperKey.includes('P.U')) {
+                    item.pu = parseFloat(val.toString().replace(/,/g, ''));
+                } else if (upperKey.includes('IMPORTE') || upperKey.includes('MONTO') || upperKey.includes('SUBTOTAL')) {
+                    item.monto = parseFloat(val.toString().replace(/,/g, ''));
+                    hasData = true;
+                }
+            }
+            
+            if (item.id !== null && hasData && !isNaN(item.monto) && !isNaN(item.pu)) {
+                items.push(item);
+            }
+        });
+        
+        return items;
+    }
+
+    function calcularDesglose(items) {
+        // 1. Calculamos el Gran Total con TODAS las partidas
+        let totalMonto = items.reduce((sum, item) => sum + item.monto, 0);
+        let target10 = Math.round((totalMonto * 0.10) * 100) / 100;
+        
+        // 2. Filtramos cuáles partidas SÍ se pueden usar para desglosar el 10%
+        const excludeUnits = ['PZA', 'ESTUDIO', 'JGO', 'LOTE', 'SERV', 'TR', 'HM'];
+        
+        let allowedItems = items.filter(item => {
+            let u = item.unidad ? item.unidad.toUpperCase() : '';
+            return !excludeUnits.includes(u);
+        });
+
+        if (allowedItems.length === 0) {
+            alert("Error: No hay partidas con unidades permitidas (M3, KG, etc.) para conformar el importe del 10%.");
+            return;
+        }
+
+        // 3. Algoritmo de búsqueda usando SOLO las partidas permitidas
+        let sortedDesc = [...allowedItems].sort((a, b) => b.monto - a.monto);
+        let largestItem = sortedDesc[0]; // Usamos la partida permitida más grande
+        let otherItems = allowedItems.filter(i => i.id !== largestItem.id).sort((a, b) => a.pu - b.pu);
+        
+        let qMainEst = Math.floor((target10 / largestItem.pu) * 100) / 100;
+        let solution = null;
+
+        // Búsqueda del ajuste perfecto
+        for (let i = 0; i < 5000; i++) {
+            let qMain = Math.round((qMainEst - i * 0.01) * 100) / 100;
+            if (qMain < 0) break;
+            
+            let amtMain = Math.round((qMain * largestItem.pu) * 100) / 100;
+            let rem = Math.round((target10 - amtMain) * 100) / 100;
+            
+            if (rem === 0) {
+                solution = { main: { id: largestItem.id, qty: qMain, amt: amtMain }, others: [] };
+                break;
+            }
+            if (rem < 0) continue;
+            
+            // Buscar un ajuste fino con otra partida permitida
+            let found = false;
+            for (let j = 0; j < Math.min(5, otherItems.length); j++) {
+                let sItem = otherItems[j];
+                let qEst = rem / sItem.pu;
+                let qOpts = [Math.floor(qEst * 100) / 100, Math.ceil(qEst * 100) / 100];
+                
+                for (let qS of qOpts) {
+                    if (qS <= 0 || qS > sItem.qty) continue;
+                    let amtS = Math.round((qS * sItem.pu) * 100) / 100;
+                    if (amtS === rem) {
+                        solution = {
+                            main: { id: largestItem.id, qty: qMain, amt: amtMain },
+                            others: [{ id: sItem.id, qty: qS, amt: amtS }]
+                        };
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            if (found) break;
+        }
+
+        if (!solution) {
+            alert("Advertencia: No se encontró una combinación perfecta al centavo en este set de datos, el código hará su mejor aproximación.");
+            return;
+        }
+
+        renderTables(items, solution, totalMonto, target10);
+    }
+
+    function renderTables(items, solution, totalMonto, target10) {
+        document.getElementById('results').style.display = 'block';
+        
+        let tbody10 = document.querySelector('#table10 tbody');
+        let tbody90 = document.querySelector('#table90 tbody');
+        tbody10.innerHTML = '';
+        tbody90.innerHTML = '';
+
+        let dict10 = {};
+        dict10[solution.main.id] = solution.main;
+        solution.others.forEach(o => dict10[o.id] = o);
+
+        let sum10 = 0;
+        let sum90 = 0;
+
+        // Construir Tabla 10%
+        for (let id in dict10) {
+            let part = dict10[id];
+            let origItem = items.find(i => i.id == id);
+            sum10 += part.amt;
+            
+            tbody10.innerHTML += `
+                <tr>
+                    <td>Partida ${origItem.id} (Parcial)</td>
+                    <td>${origItem.unidad}</td>
+                    <td>${formatNumber(part.qty)}</td>
+                    <td>${formatMoney(origItem.pu)}</td>
+                    <td class="text-right">${formatMoney(part.amt)}</td>
+                </tr>
+            `;
+        }
+        tbody10.innerHTML += `
+            <tr style="font-weight: bold; background-color: #ecf0f1;">
+                <td colspan="4" class="text-right">TOTAL 10%:</td>
+                <td class="text-right">${formatMoney(sum10)}</td>
+            </tr>
+        `;
+
+        // Construir Tabla 90%
+        items.forEach(item => {
+            let qtyToPrint = item.qty;
+            let amtToPrint = item.monto;
+            let label = `Partida ${item.id}`;
+
+            // Si la partida se usó para el 10%, mostramos solo el resto
+            if (dict10[item.id]) {
+                let used = dict10[item.id];
+                qtyToPrint = Math.round((item.qty - used.qty) * 100) / 100;
+                amtToPrint = Math.round((item.monto - used.amt) * 100) / 100;
+                label += ' (Resto)';
+            }
+            // Si no se usó (incluidas las que tienen unidades prohibidas), pasan enteras.
+
+            sum90 += amtToPrint;
+            
+            tbody90.innerHTML += `
+                <tr>
+                    <td>${label}</td>
+                    <td>${item.unidad}</td>
+                    <td>${formatNumber(qtyToPrint)}</td>
+                    <td>${formatMoney(item.pu)}</td>
+                    <td class="text-right">${formatMoney(amtToPrint)}</td>
+                </tr>
+            `;
+        });
+
+        tbody90.innerHTML += `
+            <tr style="font-weight: bold; background-color: #ecf0f1;">
+                <td colspan="4" class="text-right">TOTAL 90%:</td>
+                <td class="text-right">${formatMoney(sum90)}</td>
+            </tr>
+        `;
+
+        // Resumen
+        document.getElementById('summaryBox').innerHTML = `
+            Resumen de Verificación:<br>
+            • Importe Gran Total: ${formatMoney(totalMonto)}<br>
+            • Suma Calculada 10%: ${formatMoney(sum10)}<br>
+            • Suma Calculada 90%: ${formatMoney(sum90)}<br>
+            <span style="color: ${((sum10 + sum90).toFixed(2) === totalMonto.toFixed(2)) ? 'green' : 'red'};">
+            • Suma de Tablas (10% + 90%): ${formatMoney(sum10 + sum90)} (Diferencia: ${formatMoney(totalMonto - (sum10 + sum90))})
+            </span>
+        `;
+    }
+</script>
+
 </body>
 </html>
