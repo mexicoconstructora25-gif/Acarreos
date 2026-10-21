@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis XV Años - Elsi Yoali</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800&family=Great+Vibes&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons & Tailwind CSS -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        roseGold: {
+                            50: '#fdf8f6',
+                            100: '#f2e3df',
+                            300: '#e2b3a9',
+                            400: '#d99787',
+                            500: '#c57665',
+                            600: '#aa5546',
+                            800: '#72342b',
+                        },
+                        gold: {
+                            light: '#f9e7b9',
+                            DEFAULT: '#d4af37',
+                            dark: '#aa820a',
+                        }
+                    },
+                    fontFamily: {
+                        cursive: ['Great Vibes', 'cursive'],
+                        serifHeader: ['Cinzel', 'serif'],
+                        body: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0a0d; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 3px; }
+
+        .glass-card {
+            background: rgba(26, 16, 23, 0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fff2d1 0%, #d4af37 50%, #aa820a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .rose-gradient-text {
+            background: linear-gradient(135deg, #ffffff 0%, #f9e7b9 35%, #e2b3a9 70%, #d99787 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-border-glow {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+        }
+
+        .shimmer-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                60deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 70%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 4s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        #sparkleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Preset Themes */
+        .bg-theme-1 {
+            background: radial-gradient(circle at center, #241420 0%, #0f0a0d 100%) !important;
+        }
+        .bg-theme-2 {
+            background: linear-gradient(135deg, #3d1b32 0%, #170a14 60%, #090308 100%) !important;
+        }
+        .bg-theme-3 {
+            background: radial-gradient(circle at top, #4a192c 0%, #1c0a13 60%, #080205 100%) !important;
+        }
+        
+        /* Custom Cursive Font Display Fixes */
+        .name-display {
+            line-height: 1.4 !important;
+            padding-top: 0.2em;
+            padding-bottom: 0.3em;
+            word-break: break-word;
+            overflow: visible;
+        }
+    </style>
+</head>
+<body id="mainBody" class="bg-theme-1 text-gray-200 font-body antialiased min-h-full flex flex-col justify-between selection:bg-roseGold-500 selection:text-white transition-all duration-700 relative">
+
+    <!-- Custom Image Overlay -->
+    <div id="bgOverlay" class="fixed inset-0 bg-black/65 backdrop-blur-[2px] z-0 hidden pointer-events-none"></div>
+
+    <!-- Canvas Sparkles Background -->
+    <canvas id="sparkleCanvas"></canvas>
+
+    <!-- Top Action Floating Controls -->
+    <div class="fixed top-4 right-4 z-40 flex items-center gap-2">
+        <!-- Audio Music Player Button -->
+        <button id="musicToggle" onclick="toggleAudio()" class="p-3 rounded-full glass-card text-gold hover:text-white transition duration-300 border border-gold/40 shadow-lg flex items-center justify-center group" title="Música de Fondo">
+            <i id="musicIcon" class="ph ph-music-note-slash text-xl group-hover:scale-110 transition-transform"></i>
+        </button>
+
+        <!-- Configuration Settings Trigger -->
+        <button onclick="requestAdminAccess()" class="p-3 rounded-full glass-card text-roseGold-300 hover:text-white transition duration-300 border border-roseGold-400/40 shadow-lg flex items-center justify-center group" title="Configurar Invitación (Password: 15años)">
+            <i class="ph ph-gear text-xl group-hover:rotate-45 transition-transform duration-300"></i>
+        </button>
+    </div>
+
+    <!-- Main Invitation Content -->
+    <main class="relative z-10 w-full max-w-md mx-auto min-h-screen px-4 py-8 flex flex-col items-center justify-between text-center">
+
+        <!-- Top Header & Name -->
+        <header class="w-full mt-2 space-y-2">
+            <div class="inline-block px-4 py-1.5 rounded-full border border-gold/40 bg-roseGold-800/30 text-[11px] tracking-[0.2em] text-gold font-semibold uppercase backdrop-blur-sm">
+                Nuestra Gran Celebración
+            </div>
+            
+            <h2 class="font-serifHeader text-base tracking-[0.35em] text-gray-300 uppercase pt-3">Mis XV Años</h2>
+            
+            <!-- Quinceañera Name (Full Legibility Container) -->
+            <div class="py-2 px-1 flex items-center justify-center min-h-[120px]">
+                <h1 id="dispName" class="name-display font-cursive text-5xl sm:text-6xl rose-gradient-text drop-shadow-lg w-full">
+                    Elsi Yoali
+                </h1>
+            </div>
+            
+            <p id="dispPhrase" class="text-xs sm:text-sm text-gray-300 italic max-w-xs mx-auto font-light leading-relaxed px-2">
+                "Hay momentos en la vida que son especiales por sí solos, pero compartirlos con quienes amas los hace inolvidables."
+            </p>
+
+            <div class="w-28 h-[1px] bg-gradient-to-r from-transparent via-gold to-transparent mx-auto my-4"></div>
+        </header>
+
+        <!-- Countdown Card -->
+        <section class="w-full glass-card rounded-2xl p-5 my-4 gold-border-glow">
+            <h3 class="text-xs font-serifHeader uppercase tracking-[0.2em] text-gold mb-3">Faltan Solo</h3>
+            
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <div class="bg-black/50 rounded-xl p-2.5 border border-roseGold-500/20">
+                    <span id="countDays" class="block font-serifHeader text-2xl font-bold text-white">00</span>
+                    <span class="text-[10px] uppercase text-roseGold-300 font-medium tracking-wider">Días</span>
+                </div>
+                <div class="bg-black/50 rounded-xl p-2.5 border border-roseGold-500/20">
+                    <span id="countHours" class="block font-serifHeader text-2xl font-bold text-white">00</span>
+                    <span class="text-[10px] uppercase text-roseGold-300 font-medium tracking-wider">Horas</span>
+                </div>
+                <div class="bg-black/50 rounded-xl p-2.5 border border-roseGold-500/20">
+                    <span id="countMins" class="block font-serifHeader text-2xl font-bold text-white">00</span>
+                    <span class="text-[10px] uppercase text-roseGold-300 font-medium tracking-wider">Min</span>
+                </div>
+                <div class="bg-black/50 rounded-xl p-2.5 border border-roseGold-500/20">
+                    <span id="countSecs" class="block font-serifHeader text-2xl font-bold text-gold">00</span>
+                    <span class="text-[10px] uppercase text-gold/80 font-medium tracking-wider">Seg</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Event Details Section -->
+        <section class="w-full glass-card rounded-2xl p-6 space-y-5 text-left my-2">
+            <!-- Date & Time -->
+            <div class="flex items-start gap-4">
+                <div class="p-3 rounded-xl bg-gold/10 border border-gold/30 text-gold flex-shrink-0">
+                    <i class="ph ph-calendar-blank text-2xl"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs uppercase font-serifHeader tracking-wider text-roseGold-300">Fecha y Hora</h4>
+                    <p id="dispDate" class="text-sm font-semibold text-white mt-0.5">Sábado, 15 de Noviembre de 2026</p>
+                    <p id="dispTime" class="text-xs text-gray-300">19:00 hrs (Recepción)</p>
+                </div>
+            </div>
+
+            <!-- Venue -->
+            <div class="flex items-start gap-4">
+                <div class="p-3 rounded-xl bg-gold/10 border border-gold/30 text-gold flex-shrink-0">
+                    <i class="ph ph-church text-2xl"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs uppercase font-serifHeader tracking-wider text-roseGold-300">Lugar de Recepción</h4>
+                    <p id="dispVenue" class="text-sm font-semibold text-white mt-0.5">Salón de Eventos Jardín Real</p>
+                    <p id="dispAddress" class="text-xs text-gray-300">Av. Las Rosas #123, Col. Centro</p>
+                </div>
+            </div>
+
+            <!-- Dress Code -->
+            <div class="flex items-start gap-4">
+                <div class="p-3 rounded-xl bg-gold/10 border border-gold/30 text-gold flex-shrink-0">
+                    <i class="ph ph-necktie text-2xl"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs uppercase font-serifHeader tracking-wider text-roseGold-300">Código de Vestimenta</h4>
+                    <p id="dispDress" class="text-sm font-semibold text-white mt-0.5">Formal / Etiqueta</p>
+                    <p class="text-[11px] text-gray-400 italic">Agradecemos reservar los tonos rosa para la festejada.</p>
+                </div>
+            </div>
+
+            <!-- Gift Table / Envelope -->
+            <div class="flex items-start gap-4">
+                <div class="p-3 rounded-xl bg-gold/10 border border-gold/30 text-gold flex-shrink-0">
+                    <i class="ph ph-gift text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-xs uppercase font-serifHeader tracking-wider text-roseGold-300">Mesa de Regalos</h4>
+                    <p class="text-xs text-gray-300 mt-0.5">Tu presencia es nuestro regalo más grande. Contaremos con buzón de lluvia de sobres.</p>
+                    <button onclick="toggleGiftModal()" class="mt-2 text-xs font-semibold text-gold underline hover:text-white transition">
+                        Ver Datos Bancarios
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Interactive Buttons -->
+        <section class="w-full space-y-3 my-5">
+            <!-- Confirm WhatsApp Button -->
+            <button onclick="confirmWhatsApp()" class="shimmer-btn w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 text-white font-semibold text-sm shadow-lg hover:shadow-emerald-900/40 flex items-center justify-center gap-3 active:scale-[0.98] transition">
+                <i class="ph ph-whatsapp-logo text-2xl"></i>
+                <span>Confirmar Asistencia por WhatsApp</span>
+            </button>
+
+            <!-- Google Maps Location -->
+            <button onclick="openMaps()" class="w-full py-3.5 px-6 rounded-xl glass-card border border-gold/40 text-gold font-semibold text-sm hover:bg-gold/10 flex items-center justify-center gap-3 active:scale-[0.98] transition">
+                <i class="ph ph-map-pin text-xl"></i>
+                <span>Ver Ubicación en Google Maps</span>
+            </button>
+
+            <!-- Photo Gallery Reel -->
+            <button onclick="openGalleryModal()" class="w-full py-3.5 px-6 rounded-xl glass-card border border-roseGold-400/50 text-roseGold-300 font-semibold text-sm hover:bg-roseGold-500/10 flex items-center justify-center gap-3 active:scale-[0.98] transition">
+                <i class="ph ph-images text-xl text-roseGold-300"></i>
+                <span>📷 Galería de Fotos (5 Fotos)</span>
+            </button>
+
+            <!-- Calendar Add -->
+            <button onclick="addToCalendar()" class="w-full py-3 px-6 rounded-xl glass-card border border-gray-600/40 text-gray-300 font-medium text-xs hover:bg-white/5 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+                <i class="ph ph-calendar-plus text-lg"></i>
+                <span>Agendar en Google Calendar</span>
+            </button>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-4 space-y-1">
+            <p class="text-xs text-gray-400 font-cursive text-2xl">¡Te esperamos para celebrar juntos!</p>
+            <p class="text-[10px] text-gray-600 tracking-wider uppercase">Invitación Digital XV Años</p>
+        </footer>
+    </main>
+
+    <!-- Photo Reel Modal -->
+    <div id="galleryModal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden flex flex-col items-center justify-between p-4">
+        <div class="w-full max-w-md flex justify-between items-center py-2 border-b border-gray-800">
+            <div class="flex items-center gap-2 text-gold">
+                <i class="ph ph-camera text-xl"></i>
+                <h3 class="font-serifHeader text-sm uppercase tracking-wider text-white">Álbum de Fotos</h3>
+            </div>
+            <button onclick="closeGalleryModal()" class="p-2 text-gray-400 hover:text-white text-2xl">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+
+        <div class="relative w-full max-w-md flex-1 my-4 flex items-center justify-center overflow-hidden rounded-2xl glass-card border border-gold/30">
+            <img id="carouselMainImg" src="" alt="Foto Quinceañera" class="max-h-[62vh] w-auto object-contain rounded-xl transition-all duration-300">
+            
+            <button onclick="prevSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 border border-gold/40 text-gold hover:bg-gold hover:text-black transition">
+                <i class="ph ph-caret-left text-xl"></i>
+            </button>
+            <button onclick="nextSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 border border-gold/40 text-gold hover:bg-gold hover:text-black transition">
+                <i class="ph ph-caret-right text-xl"></i>
+            </button>
+
+            <div class="absolute bottom-3 right-4 px-3 py-1 rounded-full bg-black/80 border border-gold/30 text-xs text-gold font-mono">
+                <span id="slideCounter">1</span> / <span id="slideTotal">5</span>
+            </div>
+        </div>
+
+        <div class="w-full max-w-md flex justify-center gap-2 overflow-x-auto pb-2">
+            <div id="thumbContainer" class="flex gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Admin Password Prompt -->
+    <div id="passModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-xs w-full rounded-2xl p-6 text-center border border-roseGold-400/40">
+            <div class="w-12 h-12 rounded-full bg-roseGold-800/40 border border-roseGold-400/50 text-roseGold-300 flex items-center justify-center mx-auto mb-3">
+                <i class="ph ph-lock text-2xl"></i>
+            </div>
+            <h3 class="font-serifHeader text-base text-white font-semibold">Acceso a Configuración</h3>
+            <p class="text-xs text-gray-400 mt-1 mb-4">Ingresa la contraseña para editar. (Por defecto: <span class="text-gold font-bold">15años</span>)</p>
+            
+            <form onsubmit="verifyPassword(event)" class="space-y-3">
+                <input type="password" id="inputPassCheck" placeholder="Contraseña" class="w-full bg-black/80 border border-gray-700 rounded-xl p-2.5 text-center text-white focus:border-gold outline-none text-sm" required>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closePassModal()" class="w-1/2 py-2.5 rounded-xl border border-gray-700 text-gray-400 text-xs">Cancelar</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-gold text-black font-bold text-xs hover:brightness-110">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Gift Info Modal -->
+    <div id="giftModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-sm w-full rounded-2xl p-6 relative text-center border border-gold/40">
+            <button onclick="toggleGiftModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+            <div class="w-12 h-12 rounded-full bg-gold/10 border border-gold/30 text-gold flex items-center justify-center mx-auto mb-3">
+                <i class="ph ph-envelope-simple-open text-2xl"></i>
+            </div>
+            <h3 class="font-serifHeader text-lg text-white font-semibold">Lluvia de Sobres</h3>
+            <p class="text-xs text-gray-300 mt-2">El día del evento contaremos con buzón para sobres. Si deseas realizar transferencia:</p>
+            
+            <div class="bg-black/60 p-4 rounded-xl border border-roseGold-500/20 text-left my-4 space-y-2 text-xs">
+                <p class="text-gray-400">Banco: <span class="text-white font-semibold">BBVA</span></p>
+                <p class="text-gray-400">CLABE: <span id="clabeNum" class="text-gold font-mono font-bold tracking-wider">1234 5678 9012 3456 78</span></p>
+                <p class="text-gray-400">Titular: <span class="text-white">Familia Festejada</span></p>
+            </div>
+
+            <button onclick="copyCLABE()" class="w-full py-2.5 rounded-xl bg-gold/20 border border-gold/40 text-gold font-semibold text-xs hover:bg-gold/30 transition flex items-center justify-center gap-2">
+                <i class="ph ph-copy text-base"></i>
+                <span>Copiar CLABE Interbancaria</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Drawer -->
+    <div id="adminModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 relative text-left border border-roseGold-400/40 my-8">
+            <button onclick="toggleAdminModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+            
+            <div class="flex items-center gap-2 mb-2">
+                <i class="ph ph-sliders-horizontal text-gold text-xl"></i>
+                <h3 class="font-serifHeader text-base text-white font-semibold">Panel de Configuración</h3>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Modifica los datos, fondos, música y fotos del álbum.</p>
+
+            <form id="adminForm" onsubmit="saveAdminData(event)" class="space-y-3 text-xs">
+                
+                <!-- Background Picker -->
+                <div class="p-3 bg-black/50 rounded-xl border border-gold/30 space-y-2">
+                    <label class="block text-gold font-semibold">Estilo / Fondo de Pantalla</label>
+                    <select id="inputBgChoice" onchange="toggleCustomBgInput()" class="w-full bg-black/80 border border-gray-700 rounded-lg p-2 text-white outline-none">
+                        <option value="bg-theme-1">Fondo 1: Noche Oscura Elegante</option>
+                        <option value="bg-theme-2">Fondo 2: Rosa Místico</option>
+                        <option value="bg-theme-3">Fondo 3: Vino & Destellos</option>
+                        <option value="custom">Fondo Personalizado (Imagen por URL)</option>
+                    </select>
+
+                    <div id="customBgContainer" class="hidden pt-1">
+                        <label class="block text-gray-400 text-[11px] mb-1">URL Directa de la Imagen de Fondo</label>
+                        <input type="url" id="inputCustomBgUrl" placeholder="https://..." class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none">
+                    </div>
+                </div>
+
+                <!-- Music Setting -->
+                <div class="p-3 bg-black/50 rounded-xl border border-roseGold-500/30 space-y-2">
+                    <label class="block text-roseGold-300 font-semibold">Canción de Fondo (URL de archivo MP3)</label>
+                    <input type="url" id="inputAudioUrl" placeholder="https://ejemplo.com/cancion.mp3" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none">
+                    <p class="text-[10px] text-gray-400">Dejar vacío para reproducir música ambiental armónica sintética.</p>
+                </div>
+
+                <!-- 5 Photo Album URLs -->
+                <div class="p-3 bg-black/50 rounded-xl border border-gray-700 space-y-2">
+                    <label class="block text-white font-semibold">Fotos del Álbum (5 Fotos)</label>
+                    <div class="space-y-1.5">
+                        <input type="url" id="photoUrl1" placeholder="URL Foto 1" class="w-full bg-black/70 border border-gray-700 rounded p-1.5 text-white outline-none">
+                        <input type="url" id="photoUrl2" placeholder="URL Foto 2" class="w-full bg-black/70 border border-gray-700 rounded p-1.5 text-white outline-none">
+                        <input type="url" id="photoUrl3" placeholder="URL Foto 3" class="w-full bg-black/70 border border-gray-700 rounded p-1.5 text-white outline-none">
+                        <input type="url" id="photoUrl4" placeholder="URL Foto 4" class="w-full bg-black/70 border border-gray-700 rounded p-1.5 text-white outline-none">
+                        <input type="url" id="photoUrl5" placeholder="URL Foto 5" class="w-full bg-black/70 border border-gray-700 rounded p-1.5 text-white outline-none">
+                    </div>
+                </div>
+
+                <!-- Event Info Fields -->
+                <div>
+                    <label class="block text-roseGold-300 mb-1">Nombre Completo de la Quinceañera</label>
+                    <input type="text" id="inputName" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-roseGold-300 mb-1">Fecha</label>
+                        <input type="date" id="inputDate" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-roseGold-300 mb-1">Hora</label>
+                        <input type="time" id="inputTime" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-roseGold-300 mb-1">WhatsApp (Número con clave +52)</label>
+                    <input type="text" id="inputPhone" placeholder="529371261373" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-roseGold-300 mb-1">Mensaje de Confirmación</label>
+                    <input type="text" id="inputMessage" placeholder="Hola confirmo mi asistencia" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-roseGold-300 mb-1">Lugar / Salón</label>
+                    <input type="text" id="inputVenue" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-roseGold-300 mb-1">Dirección del Evento</label>
+                    <input type="text" id="inputAddress" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-roseGold-300 mb-1">Enlace Google Maps (URL)</label>
+                    <input type="url" id="inputMapsUrl" placeholder="https://maps.google.com/..." class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none" required>
+                </div>
+
+                <!-- Admin Password Modification -->
+                <div class="p-3 bg-black/50 rounded-xl border border-red-500/30">
+                    <label class="block text-red-300 mb-1">Cambiar Contraseña de Admin</label>
+                    <input type="password" id="inputNewPass" placeholder="Nueva clave (dejar vacío para no cambiar)" class="w-full bg-black/70 border border-gray-700 rounded-lg p-2 text-white outline-none">
+                </div>
+
+                <div class="pt-3 flex gap-2">
+                    <button type="button" onclick="resetDefaultData()" class="w-1/3 py-2.5 rounded-xl border border-red-500/40 text-red-400 font-semibold hover:bg-red-500/10 transition">
+                        Restablecer
+                    </button>
+                    <button type="submit" class="w-2/3 py-2.5 rounded-xl bg-gradient-to-r from-gold to-gold-dark text-black font-bold hover:brightness-110 transition">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 glass-card px-5 py-2.5 rounded-full border border-gold/40 text-gold text-xs font-semibold shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2">
+        <i class="ph ph-check-circle text-base"></i>
+        <span id="toastMsg">Mensaje</span>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        const defaultPhotos = [
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80"
+        ];
+
+        const defaultData = {
+            name: "Elsi Yoali",
+            date: "2026-11-15",
+            time: "19:00",
+            phone: "529371261373",
+            message: "Hola confirmo mi asistencia",
+            venue: "Salón de Eventos Jardín Real",
+            address: "Av. Las Rosas #123, Col. Centro",
+            mapsUrl: "https://maps.google.com/?q=Salon+de+Eventos",
+            phrase: '"Hay momentos en la vida que son especiales por sí solos, pero compartirlos con quienes amas los hace inolvidables."',
+            adminPass: "15años",
+            bgChoice: "bg-theme-1",
+            customBgUrl: "",
+            audioUrl: "",
+            photos: [...defaultPhotos]
+        };
+
+        let currentData = { ...defaultData };
+        let currentSlideIndex = 0;
+
+        window.onload = function() {
+            loadSavedData();
+            initSparkles();
+            startCountdown();
+            setupAudioSynth();
+        };
+
+        function loadSavedData() {
+            const saved = localStorage.getItem('xv_elsi_yoali_invitation');
+            if (saved) {
+                try {
+                    currentData = { ...defaultData, ...JSON.parse(saved) };
+                } catch(e) { console.error("Error cargando datos locales", e); }
+            }
+            renderDOM();
+        }
+
+        function renderDOM() {
+            document.getElementById('dispName').innerText = currentData.name || "Elsi Yoali";
+            document.getElementById('dispVenue').innerText = currentData.venue;
+            document.getElementById('dispAddress').innerText = currentData.address;
+
+            // Date formatting
+            const dateObj = new Date(currentData.date + 'T' + currentData.time);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = dateObj.toLocaleDateString('es-ES', options);
+            document.getElementById('dispDate').innerText = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+            document.getElementById('dispTime').innerText = `${currentData.time} hrs (Recepción)`;
+
+            // Background Applying
+            const body = document.getElementById('mainBody');
+            const overlay = document.getElementById('bgOverlay');
+            body.className = "text-gray-200 font-body antialiased min-h-full flex flex-col justify-between selection:bg-roseGold-500 selection:text-white transition-all duration-700 relative ";
+            
+            if (currentData.bgChoice === 'custom' && currentData.customBgUrl) {
+                body.style.backgroundImage = `url('${currentData.customBgUrl}')`;
+                body.style.backgroundSize = 'cover';
+                body.style.backgroundPosition = 'center';
+                body.style.backgroundAttachment = 'fixed';
+                overlay.classList.remove('hidden');
+            } else {
+                body.style.backgroundImage = 'none';
+                body.classList.add(currentData.bgChoice || 'bg-theme-1');
+                overlay.classList.add('hidden');
+            }
+
+            // Populate Form
+            document.getElementById('inputName').value = currentData.name;
+            document.getElementById('inputDate').value = currentData.date;
+            document.getElementById('inputTime').value = currentData.time;
+            document.getElementById('inputPhone').value = currentData.phone;
+            document.getElementById('inputMessage').value = currentData.message;
+            document.getElementById('inputVenue').value = currentData.venue;
+            document.getElementById('inputAddress').value = currentData.address;
+            document.getElementById('inputMapsUrl').value = currentData.mapsUrl;
+            document.getElementById('inputBgChoice').value = currentData.bgChoice || 'bg-theme-1';
+            document.getElementById('inputCustomBgUrl').value = currentData.customBgUrl || '';
+            document.getElementById('inputAudioUrl').value = currentData.audioUrl || '';
+
+            for (let i = 0; i < 5; i++) {
+                const el = document.getElementById(`photoUrl${i+1}`);
+                if (el) el.value = currentData.photos[i] || '';
+            }
+
+            toggleCustomBgInput();
+        }
+
+        function confirmWhatsApp() {
+            const encodedMsg = encodeURIComponent(currentData.message);
+            const cleanPhone = currentData.phone.replace(/[^0-9]/g, '');
+            const url = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+            window.open(url, '_blank');
+        }
+
+        function openMaps() {
+            window.open(currentData.mapsUrl, '_blank');
+        }
+
+        function addToCalendar() {
+            const startStr = currentData.date.replace(/-/g, '') + 'T' + currentData.time.replace(':', '') + '00';
+            const title = encodeURIComponent(`XV Años de ${currentData.name}`);
+            const details = encodeURIComponent(`Acompáñanos a celebrar los XV Años de ${currentData.name}.`);
+            const location = encodeURIComponent(`${currentData.venue}, ${currentData.address}`);
+            
+            const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${startStr}&details=${details}&location=${location}`;
+            window.open(gCalUrl, '_blank');
+        }
+
+        function startCountdown() {
+            function update() {
+                const targetDate = new Date(`${currentData.date}T${currentData.time}:00`).getTime();
+                const now = new Date().getTime();
+                const diff = targetDate - now;
+
+                if (diff <= 0) {
+                    document.getElementById('countDays').innerText = "00";
+                    document.getElementById('countHours').innerText = "00";
+                    document.getElementById('countMins').innerText = "00";
+                    document.getElementById('countSecs').innerText = "00";
+                    return;
+                }
+
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('countDays').innerText = d < 10 ? '0' + d : d;
+                document.getElementById('countHours').innerText = h < 10 ? '0' + h : h;
+                document.getElementById('countMins').innerText = m < 10 ? '0' + m : m;
+                document.getElementById('countSecs').innerText = s < 10 ? '0' + s : s;
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        // Robust Password Verification
+        function requestAdminAccess() {
+            document.getElementById('inputPassCheck').value = '';
+            document.getElementById('passModal').classList.remove('hidden');
+        }
+
+        function closePassModal() {
+            document.getElementById('passModal').classList.add('hidden');
+        }
+
+        function verifyPassword(e) {
+            e.preventDefault();
+            const inputPass = document.getElementById('inputPassCheck').value.trim();
+            const storedPass = (currentData.adminPass || '15años').trim();
+
+            if (inputPass.toLowerCase() === storedPass.toLowerCase()) {
+                closePassModal();
+                toggleAdminModal();
+            } else {
+                showToast("Contraseña incorrecta (Usa: 15años)");
+            }
+        }
+
+        // Gallery Modal
+        function openGalleryModal() {
+            currentSlideIndex = 0;
+            renderGalleryReel();
+            document.getElementById('galleryModal').classList.remove('hidden');
+        }
+
+        function closeGalleryModal() {
+            document.getElementById('galleryModal').classList.add('hidden');
+        }
+
+        function renderGalleryReel() {
+            const mainImg = document.getElementById('carouselMainImg');
+            const counter = document.getElementById('slideCounter');
+            const total = document.getElementById('slideTotal');
+            const container = document.getElementById('thumbContainer');
+            
+            let photos = (currentData.photos || []).filter(p => p && p.trim() !== '');
+            if (photos.length === 0) photos = [...defaultPhotos];
+
+            if (currentSlideIndex >= photos.length) currentSlideIndex = 0;
+            if (currentSlideIndex < 0) currentSlideIndex = photos.length - 1;
+
+            mainImg.src = photos[currentSlideIndex];
+            counter.innerText = currentSlideIndex + 1;
+            total.innerText = photos.length;
+
+            container.innerHTML = '';
+            photos.forEach((photoUrl, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-14 h-14 rounded-lg overflow-hidden border-2 transition flex-shrink-0 ${idx === currentSlideIndex ? 'border-gold opacity-100 scale-105' : 'border-transparent opacity-50 hover:opacity-80'}`;
+                btn.onclick = () => { currentSlideIndex = idx; renderGalleryReel(); };
+                btn.innerHTML = `<img src="${photoUrl}" class="w-full h-full object-cover">`;
+                container.appendChild(btn);
+            });
+        }
+
+        function prevSlide() {
+            currentSlideIndex--;
+            renderGalleryReel();
+        }
+
+        function nextSlide() {
+            currentSlideIndex++;
+            renderGalleryReel();
+        }
+
+        function toggleGiftModal() {
+            document.getElementById('giftModal').classList.toggle('hidden');
+        }
+
+        function toggleAdminModal() {
+            document.getElementById('adminModal').classList.toggle('hidden');
+        }
+
+        function toggleCustomBgInput() {
+            const val = document.getElementById('inputBgChoice').value;
+            const container = document.getElementById('customBgContainer');
+            if (val === 'custom') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function saveAdminData(e) {
+            e.preventDefault();
+            
+            const photos = [];
+            for (let i = 1; i <= 5; i++) {
+                const url = document.getElementById(`photoUrl${i}`).value.trim();
+                if (url) photos.push(url);
+            }
+
+            const newPass = document.getElementById('inputNewPass').value.trim();
+
+            currentData = {
+                ...currentData,
+                name: document.getElementById('inputName').value,
+                date: document.getElementById('inputDate').value,
+                time: document.getElementById('inputTime').value,
+                phone: document.getElementById('inputPhone').value,
+                message: document.getElementById('inputMessage').value,
+                venue: document.getElementById('inputVenue').value,
+                address: document.getElementById('inputAddress').value,
+                mapsUrl: document.getElementById('inputMapsUrl').value,
+                bgChoice: document.getElementById('inputBgChoice').value,
+                customBgUrl: document.getElementById('inputCustomBgUrl').value,
+                audioUrl: document.getElementById('inputAudioUrl').value,
+                photos: photos.length ? photos : [...defaultPhotos],
+                adminPass: newPass ? newPass : currentData.adminPass
+            };
+
+            localStorage.setItem('xv_elsi_yoali_invitation', JSON.stringify(currentData));
+            renderDOM();
+            toggleAdminModal();
+            showToast("¡Invitación actualizada!");
+        }
+
+        function resetDefaultData() {
+            currentData = { ...defaultData };
+            localStorage.removeItem('xv_elsi_yoali_invitation');
+            renderDOM();
+            toggleAdminModal();
+            showToast("Restablecido a valores iniciales");
+        }
+
+        function copyCLABE() {
+            const text = document.getElementById('clabeNum').innerText;
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast("CLABE copiada");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 2500);
+        }
+
+        // Audio Handler
+        let isPlayingAudio = false;
+        let polySynth, loopEvent, customAudioEl;
+
+        function setupAudioSynth() {
+            polySynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.8, decay: 1.5, sustain: 0.6, release: 2 }
+            }).toDestination();
+            polySynth.volume.value = -16;
+
+            const chords = [
+                ["C4", "E4", "G4", "B4"],
+                ["A3", "C4", "E4", "G4"],
+                ["F3", "A3", "C4", "E4"],
+                ["G3", "B3", "D4", "F#4"]
+            ];
+            let chordIdx = 0;
+
+            loopEvent = new Tone.Loop(time => {
+                polySynth.triggerAttackRelease(chords[chordIdx], "2n", time);
+                chordIdx = (chordIdx + 1) % chords.length;
+            }, "1m");
+        }
+
+        async function toggleAudio() {
+            const icon = document.getElementById('musicIcon');
+
+            // Check if user provided a custom audio MP3 URL
+            if (currentData.audioUrl && currentData.audioUrl.trim() !== '') {
+                try {
+                    if (!customAudioEl || customAudioEl.src !== currentData.audioUrl.trim()) {
+                        if (customAudioEl) {
+                            customAudioEl.pause();
+                        }
+                        customAudioEl = new Audio();
+                        customAudioEl.loop = true;
+                        customAudioEl.src = currentData.audioUrl.trim();
+                    }
+
+                    if (customAudioEl.paused) {
+                        const playPromise = customAudioEl.play();
+                        if (playPromise !== undefined) {
+                            await playPromise;
+                        }
+                        isPlayingAudio = true;
+                        icon.className = "ph ph-music-notes text-xl text-gold animate-pulse";
+                        showToast("Reproduciendo música");
+                        return;
+                    } else {
+                        customAudioEl.pause();
+                        isPlayingAudio = false;
+                        icon.className = "ph ph-music-note-slash text-xl";
+                        showToast("Música pausada");
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Audio file failed to play, falling back to ambient synth:", err);
+                    showToast("No se pudo reproducir el MP3, usando música ambiental");
+                    // Reset custom audio element on failure so fallback synth can run
+                    if (customAudioEl) {
+                        customAudioEl.pause();
+                        customAudioEl = null;
+                    }
+                }
+            }
+
+            // Fallback: Synthesized Ambient Music via Tone.js
+            try {
+                if (!isPlayingAudio) {
+                    await Tone.start();
+                    Tone.Transport.bpm.value = 65;
+                    Tone.Transport.start();
+                    loopEvent.start(0);
+                    isPlayingAudio = true;
+                    icon.className = "ph ph-music-notes text-xl text-gold animate-pulse";
+                    showToast("Música ambiental activa");
+                } else {
+                    Tone.Transport.stop();
+                    isPlayingAudio = false;
+                    icon.className = "ph ph-music-note-slash text-xl";
+                    showToast("Música pausada");
+                }
+            } catch (synthErr) {
+                console.error("Audio synth playback error:", synthErr);
+                showToast("Error al reproducir audio");
+            }
+        }
+
+        // Particle System
+        function initSparkles() {
+            const canvas = document.getElementById('sparkleCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2 + 0.5;
+                    this.alpha = Math.random();
+                    this.speedAlpha = 0.005 + Math.random() * 0.01;
+                    this.color = Math.random() > 0.4 ? '#d4af37' : '#e2b3a9';
+                }
+                update() {
+                    this.alpha += this.speedAlpha;
+                    if (this.alpha >= 1 || this.alpha <= 0) {
+                        this.speedAlpha = -this.speedAlpha;
+                    }
+                    if (this.alpha < 0) this.reset();
+                }
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, this.alpha);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 6;
+                    ctx.shadowColor = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            for (let i = 0; i < 50; i++) particles.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
